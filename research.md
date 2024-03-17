@@ -154,7 +154,7 @@ También existe la posibilidad de contrastar la identidad extraída con listados
 
 Fuente: [Onboarding Digital](https://www.mobbeel.com/blog/que-es-el-onboarding-digital/#:~:text=El%20digital%20onboarding%20se%20refiere,la%20inteligencia%20artificial%20(IA).)
 
-### Normativas
+### Normativas en EU
 
 En Europa, el marco normativo para verificar la identidad de los clientes en un proceso de *Onboarding Digital* gira principalmente en torno al Reglamento General de Protección de Datos (GDPR) y las directivas contra el blanqueo de capitales (AML). Estas son algunas normativas clave a tener en cuenta:
 
@@ -173,6 +173,44 @@ En Europa, el marco normativo para verificar la identidad de los clientes en un 
 - PSD2
 
     The Revised Payment Services Directive (PSD2) regula los servicios de pago en la UE. Exige a los proveedores de servicios de pago que apliquen la autenticación fuerte del cliente (SCA) en determinadas transacciones. La SCA suele consistir en verificar la identidad del cliente mediante dos o más factores independientes, como algo que el cliente conoce (por ejemplo, una contraseña), algo que el cliente posee (por ejemplo, un dispositivo móvil) o algo que el cliente es (por ejemplo, datos biométricos).
+
+### Normativas en Argentina
+
+En cuanto a Argentina, aunque no tiene una regulación específica equivalente al GDPR, el país tiene una ley de protección de datos llamada Ley de Protección de Datos Personales (Ley No. 25.326), que establece principios y requisitos similares para el tratamiento de datos personales. Es importante consultar y cumplir con las regulaciones locales de protección de datos en Argentina, además de considerar los estándares internacionales como el GDPR si tus operaciones involucran datos de individuos en la Unión Europea.
+
+¿Los datos biométricos son datos personales?
+
+Sí. Los datos biométricos son un tipo de dato personal obtenido por medio de un tratamiento técnico específico. Están relacionados con las características físicas, fisiológicas o de conducta de una persona humana que permiten su identificación única.
+
+¿Qué derechos reconoce esta ley sobre mis datos personales?
+
+La ley reconoce tu derecho a:
+
+- que tus datos personales no sean utilizados ni registrados sin tu consentimiento;
+
+- pedir y que te den información sobre qué datos personales tuyos están registrados en bancos de datos públicos o privados;
+
+- pedir que tus datos sean corregidos o actualizados;
+
+- pedir que sean suprimidos, en los casos en que corresponda;
+
+- pedir que sean guardados confidencialmente;
+
+- iniciar acción judicial para conocer tus datos o exigir su rectificación, supresión, confidencialidad o actualización.
+
+¿Siempre es necesario mi consentimiento para que una base de datos incluya mis datos personales?
+Sí. Salvo cuando:
+
+- tus datos fueron obtenidos de fuentes de acceso público;
+- tus datos fueron tomados para el ejercicio de funciones propias de los poderes del Estado o por una obligación legal;
+- tus datos están en listados que se limitan a datos de nombre, documento nacional de identidad, identificación tributaria o previsional, ocupación, fecha de nacimiento y domicilio;
+- tus datos fueron obtenidos por una relación contractual, científica o profesional y son necesarios para su desarrollo o cumplimiento;
+- se trata de las operaciones que hacen las entidades financieras y de las informaciones que reciben de sus clientes;
+- un organismo público que obtuvo tus datos en ejercicio de sus funciones los cede a otro organismo público para que los use con una finalidad que está dentro de sus funciones.
+
+Fuente [Habeas data](https://www.argentina.gob.ar/justicia/derechofacil/leysimple/datos-personales)
+
+[Ley 25.326 - Protección de los datos personales](https://www.argentina.gob.ar/justicia/derechofacil/leysimple/datos-personales)
 
 ---
 
