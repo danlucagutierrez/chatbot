@@ -1,4 +1,5 @@
-# Investigación | IA 
+# Investigación | IA
+
 🤖
 
 ## Índice
@@ -27,7 +28,6 @@ En la última década, los avances en Inteligencia Artificial (IA) y Machine Lea
 Estos chatbots han pasado de ser simples herramientas de respuesta a preguntas predefinidas a ser sofisticados agentes capaces de comprender el lenguaje natural y aprender de las interacciones con los usuarios. 
 
 Desarrollaremos cómo la IA y el Machine Learning han impulsado el desarrollo de los chatbots, transformando la manera en que las empresas y organizaciones interactúan con sus clientes y usuarios.
-
 
 ---
 
@@ -61,7 +61,6 @@ El análisis de grandes volúmenes de datos se ha vuelto fundamental en la toma 
 
 El *Machine Learning*, una rama de la inteligencia artificial, permite a las empresas desarrollar algoritmos que aprenden de los datos y son capaces de realizar predicciones y análisis de manera automatizada. Estos algoritmos pueden procesar grandes cantidades de datos de manera eficiente y rápida, lo que les otorga una ventaja competitiva significativa en un entorno empresarial cada vez más complejo y dinámico.
 
-
 ### Atención al Cliente con *Chatbots* Impulsados por IA
 
 Los *chatbots* impulsados por IA están transformando radicalmente la atención al cliente al proporcionar respuestas rápidas y precisas a consultas frecuentes, resolver problemas comunes y ofrecer asistencia las 24 horas del día, los 7 días de la semana. Esta tecnología, que combina el poder del procesamiento del lenguaje natural y el aprendizaje automático, está redefiniendo la experiencia del cliente de manera significativa.
@@ -73,7 +72,6 @@ Además de proporcionar asistencia instantánea, los *chatbots* impulsados por I
 La implementación de *chatbots* no solo mejora la eficiencia operativa de las empresas al reducir la carga de trabajo del personal de atención al cliente, sino que también ofrece beneficios tangibles en términos de reducción de costos y aumento de la productividad.
 
 En síntesis, los *chatbots* impulsados por IA representan una herramienta poderosa para brindar un servicio al cliente rápido, personalizado y disponible en todo momento, lo que contribuye significativamente a la mejora de la experiencia del cliente y al éxito empresarial.
-
 
 ### Detección de Fraude y Seguridad
 
@@ -155,8 +153,6 @@ También existe la posibilidad de contrastar la identidad extraída con listados
 - Persona bajo sanciones económicas
 - Personas Expuestas Políticamente (PEP)
 
-Fuente: [Onboarding Digital](https://www.mobbeel.com/blog/que-es-el-onboarding-digital/#:~:text=El%20digital%20onboarding%20se%20refiere,la%20inteligencia%20artificial%20(IA).)
-
 ### Normativas en EU
 
 En Europa, el marco normativo para verificar la identidad de los clientes en un proceso de *Onboarding Digital* gira principalmente en torno al Reglamento General de Protección de Datos (GDPR) y las directivas contra el blanqueo de capitales (AML). Estas son algunas normativas clave a tener en cuenta:
@@ -176,6 +172,8 @@ En Europa, el marco normativo para verificar la identidad de los clientes en un 
 - PSD2
 
     The Revised Payment Services Directive (PSD2) regula los servicios de pago en la UE. Exige a los proveedores de servicios de pago que apliquen la autenticación fuerte del cliente (SCA) en determinadas transacciones. La SCA suele consistir en verificar la identidad del cliente mediante dos o más factores independientes, como algo que el cliente conoce (por ejemplo, una contraseña), algo que el cliente posee (por ejemplo, un dispositivo móvil) o algo que el cliente es (por ejemplo, datos biométricos).
+
+Fuente: [Onboarding Digital](https://www.mobbeel.com/blog/que-es-el-onboarding-digital/#:~:text=El%20digital%20onboarding%20se%20refiere,la%20inteligencia%20artificial%20(IA).)
 
 ### Normativas en Argentina
 
@@ -229,12 +227,6 @@ Por otro lado, los Chatbots con inteligencia artificial (IA) son capaces de comp
 
 ---
 
-## Conclusión
-
-En conclusión, la integración de la Inteligencia Artificial y el Machine Learning en el desarrollo de chatbots ha llevado la interacción hombre-máquina a un nuevo nivel de sofisticación y eficiencia. Estos sistemas no solo ofrecen respuestas rápidas y precisas, sino que también pueden adaptarse y mejorar con el tiempo, brindando experiencias más personalizadas y satisfactorias para los usuarios. A medida que continuamos avanzando en este campo, podemos esperar ver aún más innovaciones en la IA, los chatbots y el Machine Learning.
-
----
-
 # WeatherWiz 💬
 
 ## Descripción
@@ -242,7 +234,6 @@ En conclusión, la integración de la Inteligencia Artificial y el Machine Learn
 ### **WeatherWiz** - *Chatbot* para Consultas Meteorológicas en Telegram
 
 **WeatherWiz** es un ingenioso *Chatbot* diseñado específicamente para brindar información meteorológica precisa y oportuna a través de la popular plataforma de mensajería, Telegram. Al aprovechar la inteligencia artificial (IA) y el aprendizaje automático (ML), **WeatherWiz** no solo responde a consultas sobre el clima actual, sino que también ofrece recomendaciones pertinentes basadas en datos en tiempo real.
-
 
 ## Objetivo
 
@@ -253,21 +244,23 @@ El *Chatbot* se convierte en un recurso valioso para quienes desean planificar s
 ## Herramientas
 
 - Python 🐍
-- Despliegue en la nube (AWS, Azure, Google App Engine)
-- Base de datos NoSQL (No relacional)
+- Despliegue en la nube (AWS, Azure, Google, Replit u otro)
+- Base de datos NoSQL (MongoDB)
 - Jupyter Notebook 📕 
 
    Si utiliza VS Code se recomienda instalar la extensión Jupyter:
    [VS Marketplace Link](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
 
-<!-- Agregar otras herramientas aquí. -->
-
 ## Librerias
 
-- scikit-learn: Implementacion de IA
-- pyTelegramBotApi: Conexión con la API de Telegram para crear chatbots.
-- neurotechdevkit: Manejo de datos biométricos.
-- pyfingerprint: Manejo de datos biométricos.
-- pyowm: Conexion con OpenWeatherMap para realizar consultas del clima.
+- scikit-learn: Implementacion de IA con Machine Learning.
+- pyTelegramBotApi: Conexión con la API de Telegram para crear el ChatBot.
+- neurotechdevkit: Manejo de datos biométricos (reconocimiento dactilar).
+- pyfingerprint: Manejo de datos biométricos (reconocimiento dactilar).
+- pyowm: Conexion con OpenWeatherMap para realizar consultas sobre el estado del clima.
 
-<!-- Agregar otras librerias aquí. -->
+---
+
+## Conclusión
+
+En conclusión, la integración de la Inteligencia Artificial y el Machine Learning en el desarrollo de chatbots ha llevado la interacción hombre-máquina a un nuevo nivel de sofisticación y eficiencia. Estos sistemas no solo ofrecen respuestas rápidas y precisas, sino que también pueden adaptarse y mejorar con el tiempo, brindando experiencias más personalizadas y satisfactorias para los usuarios. A medida que continuamos avanzando en este campo, podemos esperar ver aún más innovaciones en la IA, los chatbots y el Machine Learning.
