@@ -12,6 +12,11 @@
 - [Onboarding Digital](#onboarding-digital)
 - [Tipos de Chatbot](#tipos-de-chatbot)
 - [Conclusión](#conclusión)
+- [WeatherWiz](#weatherwiz-💬)
+    - [Descripción](#descripción)
+    - [Objetivo](#objetivo)
+    - [Herramientas](#herramientas)
+    - [Librerías](#librerías)
 
 ---
 
@@ -67,7 +72,7 @@ Además de proporcionar asistencia instantánea, los *chatbots* impulsados por I
 
 La implementación de *chatbots* no solo mejora la eficiencia operativa de las empresas al reducir la carga de trabajo del personal de atención al cliente, sino que también ofrece beneficios tangibles en términos de reducción de costos y aumento de la productividad.
 
-En resumen, los *chatbots* impulsados por IA representan una herramienta poderosa para brindar un servicio al cliente rápido, personalizado y disponible en todo momento, lo que contribuye significativamente a la mejora de la experiencia del cliente y al éxito empresarial.
+En síntesis, los *chatbots* impulsados por IA representan una herramienta poderosa para brindar un servicio al cliente rápido, personalizado y disponible en todo momento, lo que contribuye significativamente a la mejora de la experiencia del cliente y al éxito empresarial.
 
 
 ### Detección de Fraude y Seguridad
@@ -103,15 +108,13 @@ Estos ejemplos ilustran la creciente influencia de la inteligencia artificial en
 </div>
 <br>
 
-ChatGPT, desarrollado por OpenAI en 2022, es un ejemplo de chatbot que utiliza la inteligencia artificial, conforme a modelos de lenguaje como GPT-4 y GPT-3.5. Este chatbot se especializa en diálogos y se ha destacado por sus respuestas detalladas y articuladas. A diciembre de 2023, ChatGPT tiene 180.5 millones de usuarios mensuales (explodingtopics.com)
+ChatGPT, desarrollado por OpenAI y lanzado al publico en 2022, es un ejemplo de chatbot que utiliza la inteligencia artificial, conforme a modelos de lenguaje como GPT-4 y GPT-3.5. Este chatbot se especializa en diálogos y se ha destacado por sus respuestas detalladas y articuladas. A diciembre de 2023, ChatGPT tiene 180.5 millones de usuarios mensuales (explodingtopics.com)
 
 Sin embargo, ha sido objeto de críticas debido a errores fácticos y sesgos lingüísticos, raciales, de género y políticos en sus respuestas. Estudios han demostrado que, a pesar de estos problemas, ChatGPT sigue siendo ampliamente utilizado.
 
 Desde su lanzamiento, ChatGPT ha experimentado una evolución significativa. OpenAI ha implementado filtros de verificación de información y ha trabajado en la expansión de su capacidad multilingüe. Además, se ha integrado el uso de plugins, incluyendo uno que le permite navegar por internet.
 
 El acceso a ChatGPT está limitado en ciertos países y ha enfrentado bloqueos temporales debido a preocupaciones sobre violaciones de datos y privacidad. OpenAI también ha anunciado planes para lanzar una "GPT Store" donde los desarrolladores podrán publicar y comercializar sus propios modelos GPT independientes.
-
-En resumen, ChatGPT representa un avance significativo en el campo de la inteligencia artificial conversacional, con una amplia base de usuarios y una evolución continua para abordar desafíos en términos de precisión y sesgos en sus respuestas.
 
 ## Debates
 ### Aprobación ley de IA en UE
@@ -218,8 +221,6 @@ Fuente [Habeas data](https://www.argentina.gob.ar/justicia/derechofacil/leysimpl
 
 Entre los diferentes Chatbots que existen según el tipo de iteracción, nos encontramos con los “Dumb Chatbots” o “Chatbots de ITR”, los Chatbots "Word Spotting" y los Chatbot con IA.
 
-Este resumen destaca tres tipos principales de chatbots: los "Dumb Chatbots" o "Chatbots de ITR", los Chatbots "Word Spotting" y los Chatbot con IA.
-
 Los "Dumb Chatbots" son interfaces conversacionales que operan mediante menús de opciones predefinidas, sin emplear inteligencia artificial. Funcionan de manera secuencial, ofreciendo opciones y respondiendo según la elección del usuario. A pesar de su simplicidad, estos chatbots son altamente efectivos en situaciones donde la interacción es relativamente sencilla. Se destacan por su facilidad de implementación y menor costo, lo que los hace ideales para empresas que buscan automatizar procesos sin invertir en soluciones más complejas.
 
 Los chatbots de "Word Spotting" son una variante especializada que se enfoca en identificar palabras clave o frases específicas dentro de las conversaciones. En lugar de analizar todo el contexto, estos chatbots detectan ciertas palabras para activar respuestas predefinidas. Son útiles para situaciones predecibles, pero tienen limitaciones en la comprensión del lenguaje natural y en manejar conversaciones complejas.
@@ -231,3 +232,42 @@ Por otro lado, los Chatbots con inteligencia artificial (IA) son capaces de comp
 ## Conclusión
 
 En conclusión, la integración de la Inteligencia Artificial y el Machine Learning en el desarrollo de chatbots ha llevado la interacción hombre-máquina a un nuevo nivel de sofisticación y eficiencia. Estos sistemas no solo ofrecen respuestas rápidas y precisas, sino que también pueden adaptarse y mejorar con el tiempo, brindando experiencias más personalizadas y satisfactorias para los usuarios. A medida que continuamos avanzando en este campo, podemos esperar ver aún más innovaciones en la IA, los chatbots y el Machine Learning.
+
+---
+
+# WeatherWiz 💬
+
+## Descripción
+
+### **WeatherWiz** - *Chatbot* para Consultas Meteorológicas en Telegram
+
+**WeatherWiz** es un ingenioso *Chatbot* diseñado específicamente para brindar información meteorológica precisa y oportuna a través de la popular plataforma de mensajería, Telegram. Al aprovechar la inteligencia artificial (IA) y el aprendizaje automático (ML), **WeatherWiz** no solo responde a consultas sobre el clima actual, sino que también ofrece recomendaciones pertinentes basadas en datos en tiempo real.
+
+
+## Objetivo
+
+El propósito fundamental de **WeatherWiz** es proporcionar a los usuarios una herramienta de consulta simplificada y eficaz para acceder a información meteorológica precisa en cualquier momento. Además, se enfoca en garantizar una experiencia de usuario fluida y segura, haciendo hincapié en la protección de los datos personales a través de una autenticación segura por huella digital. 
+
+El *Chatbot* se convierte en un recurso valioso para quienes desean planificar sus actividades diarias según las condiciones climáticas y para aquellos que buscan prepararse adecuadamente ante eventos meteorológicos adversos.
+
+## Herramientas
+
+- Python 🐍
+- Despliegue en la nube (AWS, Azure, Google App Engine)
+- Base de datos NoSQL (No relacional)
+- Jupyter Notebook 📕 
+
+   Si utiliza VS Code se recomienda instalar la extensión Jupyter:
+   [VS Marketplace Link](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+
+<!-- Agregar otras herramientas aquí. -->
+
+## Librerias
+
+- scikit-learn: Implementacion de IA
+- pyTelegramBotApi: Conexión con la API de Telegram para crear chatbots.
+- neurotechdevkit: Manejo de datos biométricos.
+- pyfingerprint: Manejo de datos biométricos.
+- pyowm: Conexion con OpenWeatherMap para realizar consultas del clima.
+
+<!-- Agregar otras librerias aquí. -->
