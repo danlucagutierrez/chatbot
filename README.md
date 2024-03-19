@@ -105,4 +105,4 @@ Puede proporcionar la ubicación especifica para recibir información precisa so
 
 ## Licencia
 
-Software privado.
+Software libre.
