@@ -54,7 +54,9 @@ Puede proporcionar la ubicación especifica para recibir información precisa so
 
 ## Librerias
 
+- python-dotenv==1.0.1
 - scikit-learn==1.4.1.post1
+- pyowm==3.3.0
 
 <!-- Agregar otras librerias aquí. -->
 
