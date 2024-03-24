@@ -1,8 +1,8 @@
 import os
 from time import sleep
 from functools import wraps
-from dotenv import load_dotenv
-# Pyowm library.
+
+# pyowm library.
 from pyowm.owm import OWM
 from pyowm.weatherapi25.weather import Weather
 from pyowm.weatherapi25.forecast import Forecast
@@ -20,6 +20,17 @@ from utils.datetime_manager import DatetimeManager
 
 
 def retry_on_error(max_retries=3, delay=5):
+    """
+    Decorador para manejar errores de la libreria pyowm.
+
+    Reintenta la función decorada en caso de un error de lectura de tiempo,
+    hasta un número máximo de intentos, con un retraso entre intentos.
+
+    :param max_retries: Número máximo de intentos antes de fallar.
+    :type max_retries: int
+    :param delay: Tiempo de espera entre reintentos en segundos.
+    :type delay: int
+    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -39,44 +50,18 @@ def retry_on_error(max_retries=3, delay=5):
     return decorator
 
 
-"""
-WEATHERFORECAST RESUELVE:
-
-PRONOSTICO ACTUAL Y EXTENDIDO:
-    - HORARIO AMANECER Y ATARDECER ✅ (SOLO EN PRONOSTICO ACTUAL)
-    - TEMPERTURA (ACTUAL, MIN Y MAX) ✅
-    - SENSACIÓN TÉRMICA ✅
-    - ESTADO DEL TIEMPO ✅
-    - PRESIÓN ATFMOSFÉRICA ✅
-    - VISIBILIDAD ✅
-    - VIENTO ✅
-    - LLUVIA ✅
-    - NIEVE ✅
-    - INDICE UV ✅
-    - HUMEDAD ✅
-    - PROBABILIDAD DE PRECIPITACIONES ✅
-
-CHATBOT INTEGRACIÓN:
-    
-FUNCIONAMIENTO DEL CHATBOT CON LA INTEGRACIÓN DE WEATHERFORECAST:
-    - RESPONDE A CONSULTAS DEL CLIMA ACTUAL COMPLETO.
-    - RESPONDE A CONSULTAS ESPECIFICAS DEL CLIMA ACTUAL. EJEMPLO: TEMPERATURA, HUMEDAD, PROB.LLUVIA, ETC.
-    - RESPONDE AL PORNOSTICO EN LOS PROXIMOS N DÍAS SIENDO 1 <= N <= 5.
-"""
-
-
 class WeatherForecast:
     """
-    Clase destinada a gestionar consultas sobre el pronósticos del clima utilizando la libreria PyOWM, 
+    Clase destinada a gestionar consultas sobre el pronósticos del clima utilizando la libreria pyowm, 
     que facilita el acceso a la API de OpenWeatherMap.
 
-    PyOWM es una libreria Python que proporciona una interfaz fácil de usar para acceder a la API de OpenWeatherMap y
+    pyowm es una libreria Python que proporciona una interfaz fácil de usar para acceder a la API de OpenWeatherMap y
     obtener información meteorológica, incluidos datos como el clima actual,
     pronósticos de 3 horas para 5 días, mapas básicos del clima y otros servicios relacionados.
 
-    Para utilizar esta clase, es necesario instalar la libreria PyOWM. 
+    Para utilizar esta clase, es necesario instalar la libreria pyowm. 
     Puede encontrar más información y documentación
-    sobre PyOWM en los siguientes enlaces:
+    sobre pyowm en los siguientes enlaces:
     - PyPI: https://pypi.org/project/pyowm/
     - Documentación: https://pyowm.readthedocs.io/en/latest/
 
@@ -85,42 +70,9 @@ class WeatherForecast:
 
     API de OpenWeatherMap en su sitio web oficial: https://openweathermap.org/
 
-    Ejemplo de uso:
-    ```
-    if __name__ == "__main__":
-        load_dotenv()
-        owm_api_key = os.getenv('OWN_API_KEY')
-        # Importante: Formato de ubicación aceptado => Ciudad, Pais (countrycode), Provincia.
-        location = 'San Miguel, Buenos Aires, Argentina'
-
-        weather_forecast = WeatherForecast(owm_api_key, location)
-
-        print(f"\n\tUbicación: {location}\n")
-
-        print("\n\tPronostico extendido (5 días):\n")
-        forecast = weather_forecast.get_forecast()
-        dates = weather_forecast.datetime_manager.generate_next_dates()
-        for date in dates:
-            print(f"\n\tFecha: {date}\n")
-            weather = weather_forecast.get_weather_at_date(forecast, date)
-            weather_details = weather_forecast.get_weather_details(weather)
-            for key, value in weather_details.items():
-                print(f"\n\t\t{key}: {value}")
-
-        print("\n\tDetalles pronostico extendido:\n")
-        for key, value in weather_forecast.get_extended_forecast().items():
-            if value:
-                print(f"\n\t\t{key}: {value[0]} - {value[1]}")
-            else:
-                print(f"\n\t\t{key}: {value}")
-
-        print("\n\tPronostico actual:\n")
-        current_weather = weather_forecast.get_current_weather()
-        current_weather_details = weather_forecast.get_weather_details(
-            current_weather)
-        for key, value in current_weather_details.items():
-            print(f"\n\t\t{key}: {value}")
-    ```
+    - API's:
+        - https://openweathermap.org/current
+        - https://openweathermap.org/forecast5
 
     Atributos:
         api_key (str): Clave de API (API key) proporcionada por OpenWeatherMap para acceder a la API.
@@ -128,7 +80,7 @@ class WeatherForecast:
     """
 
     @retry_on_error()
-    def __init__(self, api_key: str, location: str):
+    def __init__(self, api_key: str, location: str) -> None:
         """
         Inicializa la clase WeatherForecast.
 
@@ -279,7 +231,7 @@ class WeatherForecast:
         """
 
         """
-        Importante:
+        Atención:
         Temperatura mínima/máxima en la API meteorológica actual y API de previsión
         No confunda los parámetros mínimos y máximos en nuestras API meteorológicas.
         En API de pronóstico de 5 días / 3 horas , API de pronóstico por hora y API de clima actual : 
