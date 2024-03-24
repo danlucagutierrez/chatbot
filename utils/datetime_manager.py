@@ -63,4 +63,4 @@ class DatetimeManager:
         """
         arg_time = self.convert_utc_to_arg(
             datetime.fromtimestamp(seconds, tz=self.utc_timezone))
-        return arg_time.strftime("%A").capitalize(), arg_time.strftime(self.format_time)
+        return arg_time.strftime("%A").capitalize(), None if '00:00hs' == arg_time.strftime(self.format_time) else arg_time.strftime(self.format_time)
