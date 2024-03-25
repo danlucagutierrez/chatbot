@@ -57,6 +57,7 @@ Puede proporcionar la ubicación especifica para recibir información precisa so
 - python-dotenv==1.0.1
 - scikit-learn==1.4.1.post1
 - pyowm==3.3.0
+- pyTelegramBotAPI==4.16.1
 
 <!-- Agregar otras librerias aquí. -->
 
