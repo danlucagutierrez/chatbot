@@ -165,10 +165,10 @@ class WeatherForecast:
         details["rain"] = self._get_rain(weather)
         details["snow"] = self._get_snow(weather)
         details["humidity"] = self._get_humidity(weather)
-        details["weather_icon_url"] = self._get_weather_icon_url(weather)
         details["uvi"] = self._get_uvi(weather)
         details["precipitation_probability"] = self._get_precipitation_probability(
             weather)
+        details["weather_status_icon"] = self._get_weather_icon_emoji(weather)
         return details
 
     def get_extended_forecast(self) -> dict:
@@ -362,17 +362,6 @@ class WeatherForecast:
         :rtype: int
         """
         return None if not weather.humidity else f'{weather.humidity}%'
-
-    def _get_weather_icon_url(self, weather: Weather) -> str:
-        """
-        Obtiene la url del ícono del estado del tiempo.
-
-        :param weather: Estado del tiempo.
-        :type weather: pyowm.weatherapi25.weather.Weather
-        :return: Nombre del ícono del clima.
-        :rtype: str
-        """
-        return weather.weather_icon_url()
     
     def _get_weather_icon_emoji(self, weather: Weather) -> str:
         """
@@ -383,27 +372,30 @@ class WeatherForecast:
         :return: Emoji representando el estado del clima.
         :rtype: str
         """
-        weather_code = weather.weather_code()
+        weather_code = weather.weather_code
+
+        if not weather_code:
+            return ""
 
         if weather_code < 300:
-            return "⛈️"  # Tormenta
+            return "⛈️" # Tormenta.
         elif weather_code < 500:
-            return "🌧️"  # Lluvia
+            return "🌧️" # Lluvia.
         elif weather_code < 600:
-            return "🌦️"  # Lluvia leve
+            return "🌦️" # Lluvia leve.
         elif weather_code < 700:
-            return "🌨️"  # Nieve
+            return "🌨️" # Nieve.
         elif weather_code == 800:
-            return "☀️"  # Despejado
+            return "☀️" # Despejado.
         elif weather_code == 801:
-            return "🌤️"  # Pocas nubes
+            return "🌤️" # Pocas nubes.
         elif weather_code == 802:
-            return "⛅"  # Parcialmente nublado
+            return "⛅" # Parcialmente nublado.
         elif weather_code < 900:
-            return "☁️"  # Nublado
+            return "☁️" # Nublado.
         else:
-            return f"Weather code not found: {weather_code}"
-        
+            return ""
+
     def _get_uvi(self, weather: Weather) -> float:
         """
         Obtiene el índice de radiación ultravioleta (UVI) del estado del tiempo.
