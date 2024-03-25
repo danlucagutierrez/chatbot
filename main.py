@@ -67,10 +67,10 @@ def build_message(weather_details: dict) -> tuple:
         if message_template:
             if isinstance(value, tuple):
                 message_parts.append(message_template.format(*value))
-            elif key == 'weather_icon_url':
-                message_imagen = value
             else:
                 message_parts.append(message_template.format(value))
+        if not message_template and key == 'weather_icon_url':
+            message_imagen = value
 
     return ''.join(message_parts), message_imagen
 
@@ -124,7 +124,7 @@ def message_handler(message: Message) -> None:
 
     if chatbot_message_imagen:
         photo = requests.get(chatbot_message_imagen).content
-        telegram_bot.bot.send_photo(user_id, photo)
+        telegram_bot.bot.send_photo(user_id, photo) # TODO: Cambiar tamaño imagen.
 
 
 if __name__ == '__main__':
