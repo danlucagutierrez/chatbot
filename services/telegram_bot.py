@@ -27,7 +27,7 @@ def retry_on_error(max_retries=3, delay=5):
             while attempts < max_retries:
                 try:
                     return func(*args, **kwargs)
-                except (ConnectionError, ReadTimeout, ApiTelegramException) as e:
+                except (ApiTelegramException, ReadTimeout) as e:
                     error = e
                     print(f"Error: {e}. Retrying in {delay} seconds...")
                     sleep(delay)
@@ -110,6 +110,10 @@ class TelegramBot:
                 lambda message: self.bot.reply_to(message, description_response))
         if message_handler:
             self.bot.message_handler(content_types=['text'])(message_handler)
+
+    @retry_on_error()
+    def send_message_bot(self, chat_id: int, text: str) -> None:
+        self.bot.send_message(chat_id=chat_id, text=text,  protect_content=False, timeout=5)
 
     def start_bot(self) -> None:
         """
