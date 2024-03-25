@@ -123,8 +123,9 @@ def message_handler(message: Message) -> None:
         telegram_bot.bot.send_message(user_id, chatbot_message)
 
     if chatbot_message_imagen:
-        photo = requests.get(chatbot_message_imagen).content
-        telegram_bot.bot.send_photo(user_id, photo) # TODO: Cambiar tamaño imagen.
+        telegram_bot.bot.send_message(user_id, weather_forecast._get_weather_icon_emoji())
+        # photo = requests.get(chatbot_message_imagen).content
+        # telegram_bot.bot.send_photo(user_id, photo) # TODO: Cambiar tamaño imagen.
 
 
 if __name__ == '__main__':
