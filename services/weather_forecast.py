@@ -373,7 +373,37 @@ class WeatherForecast:
         :rtype: str
         """
         return weather.weather_icon_url()
+    
+    def _get_weather_icon_emoji(self, weather: Weather) -> str:
+        """
+        Retorna el emoji correspondiente al estado del clima.
 
+        :param weather: Estado del tiempo.
+        :type weather: pyowm.weatherapi25.weather.Weather
+        :return: Emoji representando el estado del clima.
+        :rtype: str
+        """
+        weather_code = weather.weather_code()
+
+        if weather_code < 300:
+            return "⛈️"  # Tormenta
+        elif weather_code < 500:
+            return "🌧️"  # Lluvia
+        elif weather_code < 600:
+            return "🌦️"  # Lluvia leve
+        elif weather_code < 700:
+            return "🌨️"  # Nieve
+        elif weather_code == 800:
+            return "☀️"  # Despejado
+        elif weather_code == 801:
+            return "🌤️"  # Pocas nubes
+        elif weather_code == 802:
+            return "⛅"  # Parcialmente nublado
+        elif weather_code < 900:
+            return "☁️"  # Nublado
+        else:
+            return ""
+        
     def _get_uvi(self, weather: Weather) -> float:
         """
         Obtiene el índice de radiación ultravioleta (UVI) del estado del tiempo.
