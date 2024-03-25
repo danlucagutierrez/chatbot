@@ -30,7 +30,7 @@ def build_message(weather_details: dict) -> tuple:
     :rtype: tuple
     """
     message_parts = ['WeatherWiz 💬\n\n']
-    message_imagen = None
+    message_sticker = None
 
     message_mapping = {
         'weather_of_the_day': '{}\n',
@@ -49,7 +49,7 @@ def build_message(weather_details: dict) -> tuple:
         'rain': 'Lluvia: {}\n',
         'snow': 'Nieve: {}\n',
         'humidity': 'Humedad: {}\n',
-        'weather_icon_url': None,
+        'weather_status_icon': None,
         'uvi': 'UVI: {}\n',
         'precipitation_probability': 'Probabilidad de precipitaciones: {}\n',
         'most_cold': 'Día más frío: {} a las {} ❄\n',
@@ -69,10 +69,10 @@ def build_message(weather_details: dict) -> tuple:
                 message_parts.append(message_template.format(*value))
             else:
                 message_parts.append(message_template.format(value))
-        if not message_template and key == 'weather_icon_url':
-            message_imagen = value
+        if not message_template and key == 'weather_status_icon':
+            message_sticker = value
 
-    return ''.join(message_parts), message_imagen
+    return ''.join(message_parts), message_sticker
 
 
 # TelegramBot method.
@@ -89,16 +89,16 @@ def message_handler(message: Message) -> None:
     user_message = message.text
 
     chatbot_message = None
-    chatbot_message_imagen = None
 
     if re.search(r'pronostico actual|clima actual', user_message, re.IGNORECASE):
         current_weather = weather_forecast.get_current_weather()
         weather_details = weather_forecast.get_weather_details(
             current_weather)
-        chatbot_message, chatbot_message_imagen = build_message(
+        chatbot_message, chatbot_message_sticker = build_message(
             weather_details)
 
         telegram_bot.bot.send_message(user_id, chatbot_message)
+        telegram_bot.bot.send_message(user_id, chatbot_message_sticker)
 
     if re.search(r'pronostico extendido|clima extendido', user_message, re.IGNORECASE):
         forecast = weather_forecast.get_forecast()
@@ -106,9 +106,10 @@ def message_handler(message: Message) -> None:
         for date in dates:
             weather = weather_forecast.get_weather_at_date(forecast, date)
             weather_details = weather_forecast.get_weather_details(weather)
-            chatbot_message, _ = build_message(weather_details)
+            chatbot_message, chatbot_message_sticker = build_message(weather_details)
 
             telegram_bot.bot.send_message(user_id, chatbot_message)
+            telegram_bot.bot.send_message(user_id, chatbot_message_sticker)
 
     if re.search(r'detalle extendido', user_message, re.IGNORECASE):
         chatbot_message, _ = build_message(
@@ -121,11 +122,6 @@ def message_handler(message: Message) -> None:
                             \n¿Podrías explicarte mejor? 😀'
 
         telegram_bot.bot.send_message(user_id, chatbot_message)
-
-    if chatbot_message_imagen:
-        telegram_bot.bot.send_message(user_id, weather_forecast._get_weather_icon_emoji())
-        # photo = requests.get(chatbot_message_imagen).content
-        # telegram_bot.bot.send_photo(user_id, photo) # TODO: Cambiar tamaño imagen.
 
 
 if __name__ == '__main__':
@@ -155,7 +151,7 @@ if __name__ == '__main__':
                     \n- Detalle extendido.'
     CHATBOT_DESCRIPTION = f'{CHATBOT_NAME} brinda información meteorológica.'
 
-    LOCATION = 'San Miguel, Buenos Aires, Argentina' # TESTING.
+    LOCATION = 'San Miguel, Buenos Aires, Argentina'  # TESTING.
 
     weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
 
