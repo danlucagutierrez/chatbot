@@ -402,7 +402,7 @@ class WeatherForecast:
         elif weather_code < 900:
             return "☁️"  # Nublado
         else:
-            return ""
+            return f"Weather code not found: {weather_code}"
         
     def _get_uvi(self, weather: Weather) -> float:
         """
