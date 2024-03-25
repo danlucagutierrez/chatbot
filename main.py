@@ -20,7 +20,7 @@ TB_API_KEY = os.getenv('TB_API_KEY')
 OWM_API_KEY = os.getenv('OWN_API_KEY')
 
 
-def build_message_chatbot(weather_details: dict) -> tuple:
+def build_message(weather_details: dict) -> tuple:
     """
     Construye el mensaje para el Chatbot basado en los detalles del clima.
 
@@ -29,65 +29,102 @@ def build_message_chatbot(weather_details: dict) -> tuple:
     :return: Tupla que contiene el mensaje del chatbot y la URL de la imagen (si está disponible).
     :rtype: tuple
     """
-    chatbot_message = 'WeatherWiz 💬\n\n'
-    chatbot_message_imagen = None
+    message_parts = ['WeatherWiz 💬\n\n']
+    message_imagen = None
+
+    message_mapping = {
+        'weather_of_the_day': '{}\n',
+        'latest_weather_update': 'Última actualización: {}\n',
+        'weather_status': 'Estado del clima: {}\n',
+        'sunset_time': 'Atardecer: {}\n',
+        'sunrise_time': 'Amanacer: {}\n',
+        'feels_like': 'Sensación térmica: {}\n',
+        'temp': 'Temperatura: {} 🌡\n',
+        'max_temp': 'Rango máximo: {}\n',
+        'min_temp': 'Rango mínimo: {}\n',
+        'pressure': 'Presión atmosférica: {}\n',
+        'visibility': 'Visibilidad: {}\n',
+        'wind_speed': 'Velocidad del viento: {}\n',
+        'clouds': 'Nubes: {}\n',
+        'rain': 'Lluvia: {}\n',
+        'snow': 'Nieve: {}\n',
+        'humidity': 'Humedad: {}\n',
+        'weather_icon_url': None,
+        'uvi': 'UVI: {}\n',
+        'precipitation_probability': 'Probabilidad de precipitaciones: {}\n',
+        'most_cold': 'Día más frío: {} a las {} ❄\n',
+        'most_hot': 'Día más cálido: {} a las {} ☀\n',
+        'most_humid': 'Día más húmedo: {} a las {} ☠\n',
+        'most_rainy': 'Día más lluvioso: {} a las {} 🌧\n',
+        'most_snowy': 'Día más nevado: {} a las {} 🌨\n',
+        'most_windy': 'Día más ventoso: {} a las {} 🌬\n'
+    }
 
     for key, value in weather_details.items():
-        if not value:
+        if value is None:
             continue
-        if key == 'weather_of_the_day':
-            chatbot_message += f'{value}\n'
-        elif key == 'latest_weather_update':
-            chatbot_message += f'Última actualización: {value}\n'
-        elif key == 'weather_of_the_day':
-            chatbot_message += f'Estado del clima: {value}\n'
-        elif key == 'sunset_time':
-            chatbot_message += f'Atardecer: {value}\n'
-        elif key == 'sunrise_time':
-            chatbot_message += f'Amanacer: {value}\n'
-        elif key == 'feels_like':
-            chatbot_message += f'Sensación térmica: {value}\n'
-        elif key == 'temp':
-            chatbot_message += f'Temperatura: {value}\n'
-        elif key == 'max_temp':
-            chatbot_message += f'Rango máximo: {value}\n'
-        elif key == 'min_temp':
-            chatbot_message += f'Rango mínimo: {value}\n'
-        elif key == 'pressure':
-            chatbot_message += f'Presión: {value}\n'
-        elif key == 'visibility':
-            chatbot_message += f'Visibilidad: {value}\n'
-        elif key == 'wind_speed':
-            chatbot_message += f'Velocidad del viento: {value}\n'
-        elif key == 'clouds':
-            chatbot_message += f'Nubes: {value}\n'
-        elif key == 'rain':
-            chatbot_message += f'Lluvia: {value}\n'
-        elif key == 'snow':
-            chatbot_message += f'Nieve: {value}\n'
-        elif key == 'humidity':
-            chatbot_message += f'Humedad: {value}\n'
-        elif key == 'weather_icon_url':
-            chatbot_message_imagen = value
-        elif key == 'uvi':
-            chatbot_message += f'UVI: {value}\n'
-        elif key == 'precipitation_probability':
-            chatbot_message += f'Probabilidad de precipitaciones: {value}\n'
+        message_template = message_mapping.get(key)
+        if message_template:
+            if isinstance(value, tuple):
+                message_parts.append(message_template.format(*value))
+            elif key == 'weather_icon_url':
+                message_imagen = value
+            else:
+                message_parts.append(message_template.format(value))
 
-        if key == 'most_cold':
-            chatbot_message += f'Día más frío: {value[0]} a las {value[1]}\n'
-        elif key == 'most_hot':
-            chatbot_message += f'Día más cálido: {value[0]} a las {value[1]}\n'
-        elif key == 'most_humid':
-            chatbot_message += f'Día más humedo: {value[0]} a las {value[1]}\n'
-        elif key == 'most_rainy':
-            chatbot_message += f'Día más lluvioso: {value[0]} a las {value[1]}\n'
-        elif key == 'most_snowy':
-            chatbot_message += f'Día más nevado: {value[0]} a las {value[1]}\n'
-        elif key == 'most_windy':
-            chatbot_message += f'Día más ventoso: {value[0]} a las {value[1]}\n'
+    return ''.join(message_parts), message_imagen
 
-    return chatbot_message, chatbot_message_imagen
+
+# TelegramBot method.
+def message_handler(message: Message) -> None:
+    """
+    Maneja los mensajes enviados por un usuario del Chatbot.
+
+    :param message: El mensaje recibido.
+    :type message: telebot.types.Message
+    """
+
+    user_id = message.chat.id
+    user_first_name = message.from_user.first_name
+    user_message = message.text
+
+    chatbot_message = None
+    chatbot_message_imagen = None
+
+    if re.search(r'pronostico actual|clima actual', user_message, re.IGNORECASE):
+        current_weather = weather_forecast.get_current_weather()
+        weather_details = weather_forecast.get_weather_details(
+            current_weather)
+        chatbot_message, chatbot_message_imagen = build_message(
+            weather_details)
+
+        telegram_bot.bot.send_message(user_id, chatbot_message)
+
+    if re.search(r'pronostico extendido|clima extendido', user_message, re.IGNORECASE):
+        forecast = weather_forecast.get_forecast()
+        dates = weather_forecast.datetime_manager.generate_next_dates()
+        for date in dates:
+            weather = weather_forecast.get_weather_at_date(forecast, date)
+            weather_details = weather_forecast.get_weather_details(weather)
+            chatbot_message, _ = build_message(weather_details)
+
+            telegram_bot.bot.send_message(user_id, chatbot_message)
+
+    if re.search(r'detalle extendido', user_message, re.IGNORECASE):
+        chatbot_message, _ = build_message(
+            weather_forecast.get_extended_forecast())
+
+        telegram_bot.bot.send_message(user_id, chatbot_message)
+
+    if not chatbot_message:
+        chatbot_message = f'Disculpa {user_first_name} no comprendí tu consulta. \
+                            \n¿Podrías explicarte mejor? 😀'
+
+        telegram_bot.bot.send_message(user_id, chatbot_message)
+
+    if chatbot_message_imagen:
+        photo = requests.get(chatbot_message_imagen).content
+        telegram_bot.bot.send_photo(user_id, photo)
 
 
 if __name__ == '__main__':
@@ -110,65 +147,18 @@ if __name__ == '__main__':
         python main.py
     """
 
-    chatbot_name = 'WeatherWiz 💬'
-    chatbot_use = '\n.Clima actual. \n.Pronostico extendido. \n.Detalle extendido.'
-    chatbot_funcionality = 'WeatherWiz brinda información meteorológica.'
+    CHATBOT_NAME = 'WeatherWiz'
+    CHATBOT_START = f'{CHATBOT_NAME} 💬'
+    CHATBOT_HELP = '\n- Clima actual. \
+                    \n- Pronostico extendido. \
+                    \n- Detalle extendido.'
+    CHATBOT_DESCRIPTION = f'{CHATBOT_NAME} brinda información meteorológica.'
 
-    location = 'San Miguel, Buenos Aires, Argentina'  # TESTING.
+    LOCATION = 'San Miguel, Buenos Aires, Argentina' # TESTING.
 
-    def message_handler(message: Message) -> None:
-        """
-        Maneja los mensajes enviados por un usuario del Chatbot.
+    weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
 
-        :param message: El mensaje recibido.
-        :type message: telebot.types.Message
-        """
-
-        user_id = message.chat.id
-        user_first_name = message.from_user.first_name
-        user_message = message.text
-
-        chatbot_message = None
-        chatbot_message_imagen = None
-
-        if re.search(r'pronostico actual|clima actual', user_message, re.IGNORECASE):
-            current_weather = weather_forecast.get_current_weather()
-            weather_details = weather_forecast.get_weather_details(
-                current_weather)
-            chatbot_message, chatbot_message_imagen = build_message_chatbot(
-                weather_details)
-
-            telegram_bot.bot.send_message(user_id, chatbot_message)
-
-        if re.search(r'pronostico extendido|clima extendido', user_message, re.IGNORECASE):
-            forecast = weather_forecast.get_forecast()
-            dates = weather_forecast.datetime_manager.generate_next_dates()
-            for date in dates:
-                weather = weather_forecast.get_weather_at_date(forecast, date)
-                weather_details = weather_forecast.get_weather_details(weather)
-                chatbot_message, _ = build_message_chatbot(weather_details)
-
-                telegram_bot.bot.send_message(user_id, chatbot_message)
-
-        if re.search(r'detalle extendido', user_message, re.IGNORECASE):
-            chatbot_message, _ = build_message_chatbot(
-                weather_forecast.get_extended_forecast())
-
-            telegram_bot.bot.send_message(user_id, chatbot_message)
-
-        if not chatbot_message:
-            chatbot_message = f'Disculpa {user_first_name} no comprendí tu consulta. \n¿Podrías explicarte mejor? 😀'
-
-            telegram_bot.bot.send_message(user_id, chatbot_message)
-
-        if chatbot_message_imagen:
-            response_url = requests.get(chatbot_message_imagen).content
-            telegram_bot.bot.send_photo(user_id, response_url)
-
-    weather_forecast = WeatherForecast(
-        OWM_API_KEY, location)
-
-    telegram_bot = TelegramBot(TB_API_KEY, chatbot_name, chatbot_use,
-                               chatbot_funcionality, message_handler)
+    telegram_bot = TelegramBot(TB_API_KEY, CHATBOT_START, CHATBOT_HELP,
+                               CHATBOT_DESCRIPTION, message_handler)
 
     telegram_bot.start_bot()
