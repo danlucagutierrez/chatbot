@@ -113,6 +113,14 @@ class TelegramBot:
 
     @retry_on_error()
     def send_message_bot(self, chat_id: int, text: str) -> None:
+        """
+        Envia los mensajes de respuesta del Chatbot.
+
+        :param chat_id: El identificador del chat.
+        :type chat_id: int
+        :param text: El texto de respuesta.
+        :type text: str
+        """
         self.bot.send_message(chat_id=chat_id, text=text,  protect_content=False, timeout=5)
 
     def start_bot(self) -> None:
