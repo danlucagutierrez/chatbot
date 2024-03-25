@@ -1,6 +1,5 @@
 import os
 import re
-import requests
 from dotenv import load_dotenv
 from telebot.types import Message
 
@@ -97,8 +96,8 @@ def message_handler(message: Message) -> None:
         chatbot_message, chatbot_message_sticker = build_message(
             weather_details)
 
-        telegram_bot.bot.send_message(user_id, chatbot_message)
-        telegram_bot.bot.send_message(user_id, chatbot_message_sticker)
+        telegram_bot.send_message_bot(user_id, chatbot_message)
+        telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
     if re.search(r'pronostico extendido|clima extendido', user_message, re.IGNORECASE):
         forecast = weather_forecast.get_forecast()
@@ -108,20 +107,20 @@ def message_handler(message: Message) -> None:
             weather_details = weather_forecast.get_weather_details(weather)
             chatbot_message, chatbot_message_sticker = build_message(weather_details)
 
-            telegram_bot.bot.send_message(user_id, chatbot_message)
-            telegram_bot.bot.send_message(user_id, chatbot_message_sticker)
+            telegram_bot.send_message_bot(user_id, chatbot_message)
+            telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
     if re.search(r'detalle extendido', user_message, re.IGNORECASE):
         chatbot_message, _ = build_message(
             weather_forecast.get_extended_forecast())
 
-        telegram_bot.bot.send_message(user_id, chatbot_message)
+        telegram_bot.send_message_bot(user_id, chatbot_message)
 
     if not chatbot_message:
         chatbot_message = f'Disculpa {user_first_name} no comprendí tu consulta. \
                             \n¿Podrías explicarte mejor? 😀'
 
-        telegram_bot.bot.send_message(user_id, chatbot_message)
+        telegram_bot.send_message_bot(user_id, chatbot_message)
 
 
 if __name__ == '__main__':
@@ -156,6 +155,6 @@ if __name__ == '__main__':
     weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
 
     telegram_bot = TelegramBot(TB_API_KEY, CHATBOT_START, CHATBOT_HELP,
-                               CHATBOT_DESCRIPTION, message_handler)
+                            CHATBOT_DESCRIPTION, message_handler)
 
     telegram_bot.start_bot()
