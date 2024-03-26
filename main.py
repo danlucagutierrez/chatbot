@@ -36,7 +36,7 @@ def build_message(weather_details: dict) -> tuple:
         'latest_weather_update': 'Última actualización: {}\n',
         'weather_status': 'Estado del clima: {}\n',
         'sunset_time': 'Atardecer: {}\n',
-        'sunrise_time': 'Amanacer: {}\n',
+        'sunrise_time': 'Amanecer: {}\n',
         'feels_like': 'Sensación térmica: {}\n',
         'temp': 'Temperatura: {} 🌡\n',
         'max_temp': 'Rango máximo: {}\n',
