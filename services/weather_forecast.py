@@ -1,6 +1,4 @@
 import os
-from time import sleep
-from functools import wraps
 
 # pyowm library.
 from pyowm.owm import OWM
@@ -16,38 +14,8 @@ except (ImportError, ModuleNotFoundError):
     path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     sys.path.insert(1, path)
 
+from utils.decorators import retry_on_error
 from utils.datetime_manager import DatetimeManager
-
-
-def retry_on_error(max_retries=3, delay=5):
-    """
-    Decorador para manejar errores de la libreria pyowm.
-
-    Reintenta la función decorada en caso de un error de lectura de tiempo,
-    hasta un número máximo de intentos, con un retraso entre intentos.
-
-    :param max_retries: Número máximo de intentos antes de fallar.
-    :type max_retries: int
-    :param delay: Tiempo de espera entre reintentos en segundos.
-    :type delay: int
-    """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            error = None
-            attempts = 0
-            while attempts < max_retries:
-                try:
-                    return func(*args, **kwargs)
-                except (ConfigurationError, APIRequestError, APIResponseError) as e:
-                    error = e
-                    print(f"Error: {e}. Retrying in {delay} seconds...")
-                    sleep(delay)
-                    attempts += 1
-            raise RuntimeError(
-                f"Failed after {max_retries} retries. Type error: {type(error)}.")
-        return wrapper
-    return decorator
 
 
 class WeatherForecast:
@@ -79,7 +47,7 @@ class WeatherForecast:
         location (str): Ubicación para la cual se desea obtener el pronóstico del clima.
     """
 
-    @retry_on_error()
+    @retry_on_error(exceptions=(ConfigurationError, APIRequestError, APIResponseError))
     def __init__(self, api_key: str, location: str) -> None:
         """
         Inicializa la clase WeatherForecast.
@@ -89,17 +57,17 @@ class WeatherForecast:
         :param location: Ubicación para la cual se desea obtener el pronóstico del tiempo.
         :type location: str
         """
-        self.api_key = api_key
+        self._api_key = api_key
         self.location = location
         self.config_dict = get_default_config()
         self.config_dict['language'] = 'es'
         self.config_dict['timeout_secs'] = 5
         self.config_dict['max_retries'] = 3
-        self.owm = OWM(api_key)
+        self.owm = OWM(self._api_key)
         self.weather_manager = self.owm.weather_manager()
         self.datetime_manager = DatetimeManager()
 
-    @retry_on_error()
+    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
     def get_forecast(self, interval: str = '3h') -> Forecast:
         """
         Obtiene el pronóstico del tiempo para la ubicación especificada, para
@@ -114,7 +82,7 @@ class WeatherForecast:
             self.location, interval=interval)
         return forecast
 
-    @retry_on_error()
+    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
     def get_weather_at_date(self, forecast: Forecast, date: str) -> Weather:
         """
         Obtiene el estado del tiempo en una fecha específica del pronóstico.
@@ -129,7 +97,7 @@ class WeatherForecast:
         weather = forecast.get_weather_at(date)
         return weather
 
-    @retry_on_error()
+    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
     def get_current_weather(self) -> Weather:
         """
         Obtiene el estado del tiempo actual para la ubicación especificada.
