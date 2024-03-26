@@ -58,6 +58,7 @@ Puede proporcionar la ubicación especifica para recibir información precisa so
 - scikit-learn==1.4.1.post1
 - pyowm==3.3.0
 - pyTelegramBotAPI==4.16.1
+- PyYAML==6.0.1
 
 <!-- Agregar otras librerias aquí. -->
 
