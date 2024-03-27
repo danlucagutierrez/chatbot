@@ -304,10 +304,19 @@ class WeatherForecast:
 
         :param weather: Estado del tiempo.
         :type weather: pyowm.weatherapi25.weather.Weather
-        :return: Cantidad de lluvia en milímetros.
+        :return: Cantidad de lluvia en milímetros cada 1 o 3 horas.
         :rtype: str or None
         """
-        return None if not weather.rain else f'{weather.rain}mm'
+        rain = None
+        if weather.rain:
+            if weather.rain.get('1h'):
+                hour = '1h'
+            elif weather.rain.get('3h'):
+                hour = '3h'
+            mm = f'{weather.rain.get(hour)}mm'
+
+            rain = f'{mm}/{hour}'
+        return rain
 
     def _get_snow(self, weather: Weather) -> str or None:
         """
@@ -315,19 +324,28 @@ class WeatherForecast:
 
         :param weather: Estado del tiempo.
         :type weather: pyowm.weatherapi25.weather.Weather
-        :return: Cantidad de nieve en milímetros.
+        :return: Cantidad de nieve en milímetros cada 1 o 3 horas.
         :rtype: str or None
         """
-        return None if not weather.snow else f'{weather.snow}mm'
+        snow = None
+        if weather.snow:
+            if weather.snow.get('1h'):
+                hour = '1'
+            elif weather.snow.get('3h'):
+                hour = '3'
+            mm = f'{weather.snow.get(hour)}mm'
 
-    def _get_humidity(self, weather: Weather) -> int:
+            snow = f'{mm}/{hour}'
+        return snow
+
+    def _get_humidity(self, weather: Weather) -> str or None:
         """
         Obtiene la humedad relativa del estado del tiempo.
 
         :param weather: Estado del tiempo.
         :type weather: pyowm.weatherapi25.weather.Weather
         :return: Humedad relativa en porcentaje.
-        :rtype: int
+        :rtype: str or None
         """
         return None if not weather.humidity else f'{weather.humidity}%'
     
@@ -375,16 +393,16 @@ class WeatherForecast:
         """
         return weather.uvi
 
-    def _get_precipitation_probability(self, weather: Weather) -> int:
+    def _get_precipitation_probability(self, weather: Weather) -> str or None:
         """
         Obtiene la probabilidad de precipitación del estado del tiempo.
 
         :param weather: Estado del tiempo.
         :type weather: pyowm.weatherapi25.weather.Weather
         :return: Probabilidad de precipitación en porcentaje.
-        :rtype: int
+        :rtype: str or None
         """
-        return None if not weather.precipitation_probability else f'{weather.precipitation_probability}%'
+        return None if not weather.precipitation_probability else f'{int(weather.precipitation_probability * 100)}%'
 
     def _get_most_cold(self, forecast: Forecast) -> tuple:
         """
