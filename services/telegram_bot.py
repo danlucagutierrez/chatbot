@@ -98,7 +98,7 @@ class TelegramBot:
                 lambda message: self.bot.reply_to(message, f'¡Hola soy {start_response}!'))
         if help_response:
             self.bot.message_handler(commands=['help'])(
-                lambda message: self.bot.reply_to(message, f'¿Necesitas ayuda? Puedes consultar por: {help_response}'))
+                lambda message: self.bot.reply_to(message, f'¿Necesitas ayuda? \nPuedes consultar por: {help_response}'))
         if description_response:
             self.bot.message_handler(commands=['description'])(
                 lambda message: self.bot.reply_to(message, description_response))
