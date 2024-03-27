@@ -1,5 +1,7 @@
 import os
 import re
+import signal
+import threading
 from dotenv import load_dotenv
 from telebot.types import Message
 
@@ -17,6 +19,28 @@ from services.weather_forecast import WeatherForecast
 load_dotenv()
 TB_API_KEY = os.getenv('TB_API_KEY')
 OWM_API_KEY = os.getenv('OWN_API_KEY')
+
+THREADS = False
+
+
+def set_threads(signum, frame):
+    """
+    Manejador para la señal SIGINT (Ctrl + C).
+    """
+    global THREADS
+    THREADS = True
+
+
+signal.signal(signal.SIGINT, set_threads)
+
+
+def run_thread():
+    """
+    Crea el hilo que contreda la ejecución de TelegramBot.
+    """
+    thread = threading.Thread(name='Chatbot', target=telegram_bot.start_bot)
+    thread.start()
+    return thread
 
 
 def build_message(weather_details: dict, type_query: str) -> tuple:
@@ -70,8 +94,8 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
             continue
 
         if type_query == 'extended_weather' and \
-            key in ('latest_weather_update', 'sunset_time', 'sunrise_time', 'max_temp', 'min_temp'):
-                continue
+                key in ('latest_weather_update', 'sunset_time', 'sunrise_time', 'max_temp', 'min_temp'):
+            continue
 
         message_template = message_mapping.get(key)
         if message_template:
@@ -84,7 +108,7 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
 
     return ''.join(message_parts), message_sticker
 
-# TelegramBot method.
+
 def message_handler(message: Message) -> None:
     """
     Maneja los mensajes enviados por un usuario del Chatbot.
@@ -92,7 +116,6 @@ def message_handler(message: Message) -> None:
     :param message: El mensaje recibido.
     :type message: telebot.types.Message
     """
-
     user_id = message.chat.id
     user_first_name = message.from_user.first_name
     user_message = message.text
@@ -119,7 +142,8 @@ def message_handler(message: Message) -> None:
         for date in dates:
             weather = weather_forecast.get_weather_at_date(forecast, date)
             weather_details = weather_forecast.get_weather_details(weather)
-            chatbot_message, chatbot_message_sticker = build_message(weather_details, type_query)
+            chatbot_message, chatbot_message_sticker = build_message(
+                weather_details, type_query)
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
@@ -132,7 +156,7 @@ def message_handler(message: Message) -> None:
         telegram_bot.send_message_bot(user_id, chatbot_message)
 
     if not chatbot_message:
-        chatbot_message = f'Disculpa {user_first_name} no comprendí tu consulta. \
+        chatbot_message = f'Disculpa {user_first_name}, WeatherWiz 💬 no comprende tu consulta. \
                             \n¿Podrías explicarte mejor? 😀'
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
@@ -157,6 +181,7 @@ if __name__ == '__main__':
     Ejemplo de uso:
         python main.py
     """
+    print(f"\n\tInicia servicio WeatherWiz. ")
 
     CHATBOT_NAME = 'WeatherWiz'
     CHATBOT_START = f'{CHATBOT_NAME} 💬'
@@ -170,6 +195,21 @@ if __name__ == '__main__':
     weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
 
     telegram_bot = TelegramBot(TB_API_KEY, CHATBOT_START, CHATBOT_HELP,
-                            CHATBOT_DESCRIPTION, message_handler)
+                               CHATBOT_DESCRIPTION, message_handler)
 
-    telegram_bot.start_bot()
+    thread = run_thread()
+
+    id_thread = thread.native_id
+
+    print(f"\n\t\tEjecución Thread ID: {id_thread}")
+
+    while not THREADS: pass
+
+    print(f"\n\t\t\tFinalizando Thread ID: {id_thread}, aguarde unos segundos...")
+
+    telegram_bot.stop_bot()
+    thread.join()
+
+    print(F"\n\t\tEjecución de Thread ID: {id_thread} finalizada.")
+
+    print(f"\n\tFinaliza servicio WeatherWiz.\n")
