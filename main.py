@@ -19,16 +19,22 @@ TB_API_KEY = os.getenv('TB_API_KEY')
 OWM_API_KEY = os.getenv('OWN_API_KEY')
 
 
-def build_message(weather_details: dict) -> tuple:
+def build_message(weather_details: dict, type_query: str) -> tuple:
     """
     Construye el mensaje para el Chatbot basado en los detalles del clima.
 
     :param weather_details: Detalles del clima.
     :type weather_details: dict
+    :param type_query: Tipo de consulta.
+    :type type_query: str
     :return: Tupla que contiene el mensaje del chatbot y la URL de la imagen (si está disponible).
     :rtype: tuple
     """
     message_parts = ['WeatherWiz 💬\n\n']
+
+    if type_query == 'detailed_extended_weather':
+        message_parts.append('Día más...\n')
+
     message_sticker = None
 
     message_mapping = {
@@ -51,17 +57,22 @@ def build_message(weather_details: dict) -> tuple:
         'weather_status_icon': None,
         'uvi': 'UVI: {}\n',
         'precipitation_probability': 'Probabilidad de precipitaciones: {}\n',
-        'most_cold': 'Día más frío: {} a las {} ❄\n',
-        'most_hot': 'Día más cálido: {} a las {} ☀\n',
-        'most_humid': 'Día más húmedo: {} a las {} ☠\n',
-        'most_rainy': 'Día más lluvioso: {} a las {} 🌧\n',
-        'most_snowy': 'Día más nevado: {} a las {} 🌨\n',
-        'most_windy': 'Día más ventoso: {} a las {} 🌬\n'
+        'most_cold': '...frío: {} - {} ❄\n',
+        'most_hot': '...cálido: {} - {} ☀\n',
+        'most_humid': '...húmedo: {} - {} 🌫\n',
+        'most_rainy': '...lluvioso: {} - {} 🌧\n',
+        'most_snowy': '...nevado: {} - {} 🌨\n',
+        'most_windy': '...ventoso: {} - {} 🌬\n'
     }
 
     for key, value in weather_details.items():
         if value is None:
             continue
+
+        if type_query == 'extended_weather' and \
+            key in ('latest_weather_update', 'sunset_time', 'sunrise_time', 'max_temp', 'min_temp'):
+                continue
+
         message_template = message_mapping.get(key)
         if message_template:
             if isinstance(value, tuple):
@@ -72,7 +83,6 @@ def build_message(weather_details: dict) -> tuple:
             message_sticker = value
 
     return ''.join(message_parts), message_sticker
-
 
 # TelegramBot method.
 def message_handler(message: Message) -> None:
@@ -87,32 +97,37 @@ def message_handler(message: Message) -> None:
     user_first_name = message.from_user.first_name
     user_message = message.text
 
+    type_query = None
+
     chatbot_message = None
 
     if re.search(r'pronostico actual|clima actual', user_message, re.IGNORECASE):
+        type_query = 'current_weather'
         current_weather = weather_forecast.get_current_weather()
         weather_details = weather_forecast.get_weather_details(
             current_weather)
         chatbot_message, chatbot_message_sticker = build_message(
-            weather_details)
+            weather_details, type_query)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
         telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
     if re.search(r'pronostico extendido|clima extendido', user_message, re.IGNORECASE):
+        type_query = 'extended_weather'
         forecast = weather_forecast.get_forecast()
         dates = weather_forecast.datetime_manager.generate_next_dates()
         for date in dates:
             weather = weather_forecast.get_weather_at_date(forecast, date)
             weather_details = weather_forecast.get_weather_details(weather)
-            chatbot_message, chatbot_message_sticker = build_message(weather_details)
+            chatbot_message, chatbot_message_sticker = build_message(weather_details, type_query)
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
     if re.search(r'detalle extendido', user_message, re.IGNORECASE):
+        type_query = 'detailed_extended_weather'
         chatbot_message, _ = build_message(
-            weather_forecast.get_extended_forecast())
+            weather_forecast.get_extended_forecast(), type_query)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
 
@@ -145,10 +160,10 @@ if __name__ == '__main__':
 
     CHATBOT_NAME = 'WeatherWiz'
     CHATBOT_START = f'{CHATBOT_NAME} 💬'
-    CHATBOT_HELP = '\n- Clima actual. \
-                    \n- Pronostico extendido. \
-                    \n- Detalle extendido.'
-    CHATBOT_DESCRIPTION = f'{CHATBOT_NAME} brinda información meteorológica.'
+    CHATBOT_HELP = f'\n• Clima actual. \
+                        \n• Pronostico extendido. \
+                        \n• Detalle extendido.'
+    CHATBOT_DESCRIPTION = f'{CHATBOT_NAME} 💬 brinda información meteorológica.'
 
     LOCATION = 'San Miguel, Buenos Aires, Argentina'  # TESTING.
 
