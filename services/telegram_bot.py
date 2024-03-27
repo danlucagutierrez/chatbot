@@ -95,31 +95,48 @@ class TelegramBot:
         """
         if start_response:
             self.bot.message_handler(commands=['start'])(
-                lambda message: self.bot.reply_to(message, f'¡Hola soy {start_response}!'))
+                lambda message: self.reply_to_bot(message, f'¡Hola soy {start_response}!'))
         if help_response:
             self.bot.message_handler(commands=['help'])(
-                lambda message: self.bot.reply_to(message, f'{start_response} esta aquí para ayudarte, puedes consultar por: {help_response}'))
+                lambda message: self.reply_to_bot(message, f'{start_response} esta aquí para ayudarte, puedes consultar por: {help_response}'))
         if description_response:
             self.bot.message_handler(commands=['description'])(
-                lambda message: self.bot.reply_to(message, description_response))
+                lambda message: self.reply_to_bot(message, description_response))
         if message_handler:
             self.bot.message_handler(content_types=['text'])(message_handler)
 
     @retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    def reply_to_bot(self, message: str, text: str) -> None:
+        """
+        Responde a un mensaje especifico.
+
+        :param message: El mensaje.
+        :type message: str
+        :param text: El texto de respuesta.
+        :type text: str
+        """
+        self.bot.reply_to(message=message, text=text, timeout=5)
+
+    @retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
     def send_message_bot(self, chat_id: int, text: str) -> None:
         """
-        Envia los mensajes de respuesta del Chatbot.
+        Envia un mensaje.
 
         :param chat_id: El identificador del chat.
         :type chat_id: int
         :param text: El texto de respuesta.
         :type text: str
         """
-        self.bot.send_message(chat_id=chat_id, text=text,
-                              protect_content=False, timeout=5)
+        self.bot.send_message(chat_id=chat_id, text=text, timeout=5)
 
     def start_bot(self) -> None:
         """
-        Inicia el Chatbot de Telegram y comienza a escuchar los mensajes entrantes.
+        Inicia la ejecución del Chatbot de Telegram y comienza a escuchar los mensajes entrantes.
         """
         self.bot.infinity_polling()
+
+    def stop_bot(self) -> None:
+        """
+        Frena la ejecución del Chatbot de Telegram y comienza a escuchar los mensajes entrantes.
+        """
+        self.bot.stop_bot()
