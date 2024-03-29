@@ -1,0 +1,43 @@
+body {
+    font-family: Roboto, sans-serif;
+    color: white;
+    background-color: #282725;
+    display:flex;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 100px;
+}
+
+button {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 15px;
+    border-width: 0;
+    margin: auto;
+}
+
+button:hover {
+    background-color: #2bbceb;
+}
+button.success {
+    background-color: lime;
+}
+button.error {
+    background-color: crimson;
+    color: white;
+}
+
+#statusMessage {
+    margin-top: 20px;
+}
+
+img {
+    max-width: 100%;
+    max-height: 40vh;
+    margin: auto;
+}
