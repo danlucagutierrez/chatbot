@@ -4,6 +4,7 @@ from requests.exceptions import ReadTimeout
 
 # pyTelegramBotAPI library.
 import telebot
+from telebot.types import Message
 from telebot.apihelper import ApiTelegramException
 
 try:
@@ -13,7 +14,7 @@ except (ImportError, ModuleNotFoundError):
     path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     sys.path.insert(1, path)
 
-from utils.decorators import retry_on_error
+from utils.decorator_manager import DecoratorManager
 
 
 class TelegramBot:
@@ -58,66 +59,101 @@ class TelegramBot:
         message_handler (str): Respuesta a consultas de texto (sin comando).
     """
 
-    def __init__(self, api_key: str, start_response: str = None, help_response: str = None, description_response: str = None, message_handler: Callable = None) -> None:
+    def __init__(self, api_key: str, command_start: str, command_help: str, command_description: str, command_location: str, chatbot_handler: Callable) -> None:
         """
         Inicializa el bot de Telegram con la clave de API proporcionada.
 
         :param api_key: La clave de API del bot de Telegram.
         :type api_key: str
-        :param start_response: La respuesta para el comando /start.
-        :type start_response: str
-        :param help_response: La respuesta para el comando /help.
-        :type help_response: str
-        :param description_response: La respuesta para el comando /description.
-        :type description_response: str
-        :param message_handler: La función para manejar mensajes de texto.
-        :type message_handler: callable
+        :param command_start: La respuesta para el comando /start.
+        :type command_start: str
+        :param command_help: La respuesta para el comando /help.
+        :type command_help: str
+        :param command_description: La respuesta para el comando /description.
+        :type command_description: str
+        :param command_location: La respuesta para el comando /location.
+        :type command_location: str
+        :param chatbot_handler: La función para manejar mensajes de texto.
+        :type chatbot_handler: callable
         """
         self._api_key = api_key
         self.bot = telebot.TeleBot(self._api_key)
 
-        # Importante: Registra los manejadores de mensajes.
-        self.register_handlers(start_response, help_response,
-                               description_response, message_handler)
+        self.command_start = command_start
+        self.command_help = command_help
+        self.command_description = command_description
+        self.command_location = command_location
+        self.chatbot_handler = chatbot_handler
 
-    def register_handlers(self, start_response: str = None, help_response: str = None, description_response: str = None, message_handler: Callable = None) -> None:
+        self.text_response_user = None
+
+        self.register_handlers()
+
+    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    def register_handlers(self) -> None:
         """
         Registra los manejadores de mensajes para los comandos del Chatbot.
-
-        :param start_response: La respuesta para el comando /start.
-        :type start_response: str
-        :param help_response: La respuesta para el comando /help.
-        :type help_response: str
-        :param description_response: La respuesta para el comando /description.
-        :type description_response: str
-        :param message_handler: La función para manejar mensajes de texto.
-        :type message_handler: callable
         """
-        if start_response:
-            self.bot.message_handler(commands=['start'])(
-                lambda message: self.reply_to_bot(message, f'¡Hola soy {start_response}!'))
-        if help_response:
-            self.bot.message_handler(commands=['help'])(
-                lambda message: self.reply_to_bot(message, f'{start_response} esta aquí para ayudarte, puedes consultar por: {help_response}'))
-        if description_response:
-            self.bot.message_handler(commands=['description'])(
-                lambda message: self.reply_to_bot(message, description_response))
-        if message_handler:
-            self.bot.message_handler(content_types=['text'])(message_handler)
+        self.bot.message_handler(commands=["start"])(
+            lambda message: self.reply_to_bot(message, f"¡Hola soy {self.command_start}!"))
+        self.bot.message_handler(commands=["help"])(
+            lambda message: self.reply_to_bot(message, f"{self.command_start} esta aquí para ayudarte, puedes consultar por: {self.command_help}"))
+        self.bot.message_handler(commands=["description"])(
+            lambda message: self.reply_to_bot(message, self.command_description))
+        self.bot.message_handler(commands=["location"])(
+            lambda message: self.handle_location_command(message, self.command_location))
 
-    @retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
-    def reply_to_bot(self, message: str, text: str) -> None:
+        self.bot.message_handler(content_types=["text"])(self.chatbot_handler)
+
+    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    def handle_location_command(self, message: Message, command_location: str) -> None:
+        """
+        Maneja el comando /location y espera una respuesta de texto del Usuario.
+
+        :param message: El mensaje recibido.
+        :type message: Message
+        :param command_location: La respuesta para el comando /location.
+        :type command_location: str.
+        """
+        self.bot.reply_to(message, command_location)
+        self.bot.register_next_step_handler(
+            message, self.handle_text_response_user)
+
+    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    def handle_text_response_user(self, message: Message) -> None:
+        """
+        Maneja la respuesta de texto del Usuario después de un comando.
+
+        :param message: El mensaje recibido.
+        :type message: Message
+        :param text: Texto del mensaje.
+        :rtype text: str
+        """
+        self.text_response_user = message.text
+        self.bot.reply_to(message, f"Ingresó {self.text_response_user}. \nAhora puede realizar su consulta. 😉")
+
+    def get_text_response_user(self) -> str or None:
+        """
+        Retorna el mensaje de respuesta a un comando almacenado.
+
+        :param text_response_user: Texto ingresado por el usuario despues de un comando.
+        :rtype text_response_user: str or None
+        """
+        return self.text_response_user
+
+    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    def reply_to_bot(self, message: Message, text: str) -> None:
         """
         Responde a un mensaje especifico.
 
         :param message: El mensaje.
-        :type message: str
+        :type message: Message
         :param text: El texto de respuesta.
         :type text: str
         """
-        self.bot.reply_to(message=message, text=text, timeout=5)
+        self.bot.reply_to(message, text, timeout=5)
 
-    @retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
+    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
     def send_message_bot(self, chat_id: int, text: str) -> None:
         """
         Envia un mensaje.
@@ -127,7 +163,7 @@ class TelegramBot:
         :param text: El texto de respuesta.
         :type text: str
         """
-        self.bot.send_message(chat_id=chat_id, text=text, timeout=5)
+        self.bot.send_message(chat_id, text, timeout=5)
 
     def start_bot(self) -> None:
         """
@@ -137,6 +173,6 @@ class TelegramBot:
 
     def stop_bot(self) -> None:
         """
-        Frena la ejecución del Chatbot de Telegram y comienza a escuchar los mensajes entrantes.
+        Frena la ejecución del Chatbot de Telegram.
         """
         self.bot.stop_bot()
