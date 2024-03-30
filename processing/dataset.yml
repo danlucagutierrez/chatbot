@@ -1,0 +1,167 @@
+conversation:
+  user_conversation:
+    greetings:
+      - "Hola."
+      - "¡Buenos días!"
+      - "Hola, ¿cómo estás?"
+      - "Hola, ¿cómo andas?"
+      - "¿Qué tal?"
+      - "Saludos."
+      - "Hola, ¿qué hay de nuevo?"
+      - "¡Hola! ¿Cómo va todo?"
+      - "¿Que haces?"
+      - "¡Buenas!"
+      - "Buenos días."
+      - "Buenas tardes."
+      - "Buenas noches."
+      - "Hola, ¡un gusto conocerte!"
+      - "Hola, ¡un placer conocerte!"
+
+    farewells:
+      - "Adiós."
+      - "Gracias por todo."
+      - "Hasta luego."
+      - "Chau, nos vemos."
+      - "Cuidate, nos vemos."
+      - "Nos vemos."
+      - "Hasta la vista."
+      - "Hasta pronto."
+      - "Adiós, que tengas un buen día."
+      - "Hasta luego, cuídate."
+      - "Nos vimos."
+      - "Muchisimas gracias."
+      - "¡Te agradezco!"
+      - "Te consulto luego."
+      - "Exitos."
+
+  chatbot_conversation:
+    greetings: 
+      - "¡Hola!"
+      - "Hola, ¿en qué puedo ayudarte?"
+      - "Hola, espero estes bien, ¿qué puedo hacer por ti?"
+      - "Hola, un placer poder brindarte información."
+      - "Buenas! ¿qué necesitas?"
+      - "Gracias por contactarme, ¿qué puedo hacer por ti hoy?"
+      - "¡Bienvenido! ¿qué necesitas?"
+      - "Un placer, a tus ordenes."
+      - "Hola, a tus ordenes."
+      - "Hola, puedes empezar a consultar sobre el clima."
+      - "Un gusto, ¿puedo ayudarte sobre el clima?"
+      - "Hola, soy el mejor Chatbot del clima que vas a conocer, preguntame. 💬"
+
+    farewells: 
+      - "¡Hasta luego!" 
+      - "¡Adiós! ¡Que tengas un buen día!"
+      - "¡Que el clima te acompañe!"
+      - "¡Que tengas un grandioso día!"
+      - "¡Hasta la próxima!"
+      - "Gracias por contactarme, hasta luego."
+      - "Nos vemos luego."
+      - "¡Mucha suerte!"
+      - "Adiós."
+      - "Mucha suerte."
+      - "🙂"
+      - "🤗"
+      - "👋"
+      - "🤝"
+      - "🤙"
+
+
+weather:
+  weather_user_inquiries:
+    current_weather:
+      - "¿Qué temperatura hace hoy?"
+      - "¿Cuál es el clima de hoy?"
+      - "Clima actual."
+      - "Pronostico de hoy."
+      - "¿Hace frio hoy?"
+      - "¿Cuál es el clima para hoy?"
+      - "¿Va a llover hoy?"
+      - "Quiero saber que temperatura hace ahora."
+      - "Quiero saber a que hora sale el sol."
+      - "Quiero saber a que hora cae el sol."
+      - "¿A que hora amanece?"
+      - "¿A que hora atardece?"
+      - "Temperatura actual."
+      - "Clima actual."
+      - "Quiro saber si hoy llueve."
+      - "¿Cuánto calor hace?"
+      - "¿Cuánto frio hace?"
+      - "¿Cuántos grados hace hoy?"
+      - "¿Cuál es la sensación termica hoy?"
+      - "¿Cuántos grados hace ahora?"
+      - "¿Cuál es la sensación termica ahora?"
+      - "¿Va a llover hoy?"
+      - "Pronostico actual."
+      - "Datos del clima hoy."
+      - "Datos meteorologícos hoy."
+
+    extended_weather:
+      - "¿Qué temperatura hace mañana?"
+      - "¿Cuál es el clima para mañana?"
+      - "Clima para los próximos días."
+      - "Pronostico extendido."
+      - "¿Hace frio pasado mañana?"
+      - "¿Cuál es el clima para los próximos días?"
+      - "¿Va a llover mañana?"
+      - "Quiero saber que temperatura hará los próximos días."
+      - "Clima extendido."
+      - "Datos del clima para los próximos días de la semana."
+      - "Datos del clima en la semana."
+      - "Datos meteorologícos para la semana."
+      - "Temperatura mañana."
+      - "Clima mañana."
+      - "Quiro saber si mañana llueve."
+      - "¿Cuánto calor hará mañana?"
+      - "¿Cuánto frio hará mañana?"
+      - "¿Cuántos grados tendremos mañana?"
+      - "¿Cuál es la sensación termica los próximos días?"
+      - "¿Cuántos grados tendremos los próximos días?"
+      - "¿Cuál es la sensación termica mañana?"
+      - "¿Va a llover mañana?"
+      - "Pronostico extendido."
+      - "Datos del clima para los próximos 5 días."
+      - "Datos meteorologícos para los próximos 5 días."
+
+    detailed_extended_weather:
+      - "¿Cuál es el día más frio los próximos días?"
+      - "¿Cuál es el día más caluroso los próximos días?"
+      - "¿Cuál es el día más ventoso los próximos días?"
+      - "¿Cuál es el día más nevado los próximos días?"
+      - "¿Cuál es el día más lluvioso los próximos días?"
+      - "¿Cuál es el día más humedo los próximos días?"
+      - "¿Cuándo hace más frio?"
+      - "¿Cuándo hace más calor?"
+      - "¿Cuándo hay más viento?"
+      - "¿Cuándo hace más frio?"
+      - "¿Cuándo hay más nieve?"
+      - "¿Cuándo hay más lluvia?"
+      - "¿Cuándo hay más humedad?"
+      - "Más información de los próximos días."
+      - "Más información de los próximos 5 días."
+
+  weather_chatbot_answers:
+    current_weather: ["clima actual"]
+    extended_weather: ["clima extendido"]
+    detailed_extended_weather: ["detalle extendido"]
+
+
+weather_status:
+  weather_status:
+    clouds:
+      - "Nubes"
+      - "Muy nuboso"
+
+    clear:
+      - "Cielo claro"
+
+  chatbot_recomendations:
+    clouds:
+      ["Que las nubes no tapen todo lo grandioso que puede ser tu día.",
+      "No importa si hay nubes, el sol siempre estara detras.",
+      "Recomiendo que uses protector solar, aunque haya nubes."]
+
+    clear:
+      ["Recuerda llevar gafas de sol. 😎",
+      "Es recomendable que uses protector solar.",
+      "Que tengas un gran dia, aprovecha que esta soleado."]
