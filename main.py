@@ -14,6 +14,7 @@ except (ImportError, ModuleNotFoundError):
 
 from services.telegram_bot import TelegramBot
 from services.weather_forecast import WeatherForecast
+from processing.classification_model import ClassificationModel
 
 
 load_dotenv()
@@ -51,15 +52,19 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
     :type weather_details: dict
     :param type_query: Tipo de consulta.
     :type type_query: str
-    :return: Tupla que contiene el mensaje del chatbot y la URL de la imagen (si está disponible).
+    :return: Tupla que contiene el mensaje del chatbot, la URL de la imagen (si está disponible) y el estado del clima.
     :rtype: tuple
     """
-    message_parts = ["WeatherWiz 💬\n\n"]
+    message_parts = [f"{CHATBOT_NAME} 💬\n\n"]
+
+    message_parts.append(f'📍 Ubicación: {LOCATION}.\n\n')
 
     if type_query == "detailed_extended_weather":
         message_parts.append("Día más...\n")
 
     message_sticker = None
+
+    weather_status = None
 
     message_mapping = {
         "weather_of_the_day": "{}\n",
@@ -97,6 +102,10 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
                 key in ("latest_weather_update", "sunset_time", "sunrise_time", "max_temp", "min_temp"):
             continue
 
+        if type_query == "detailed_extended_weather" and \
+            key == "weather_status":
+            continue
+
         message_template = message_mapping.get(key)
         if message_template:
             if isinstance(value, tuple):
@@ -106,7 +115,10 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
         if not message_template and key == "weather_status_icon":
             message_sticker = value
 
-    return "".join(message_parts), message_sticker
+        if key == 'weather_status':
+            weather_status = value
+
+    return "".join(message_parts), message_sticker, weather_status
 
 
 def chatbot_handler(message: Message) -> None:
@@ -129,16 +141,31 @@ def chatbot_handler(message: Message) -> None:
     global LOCATION
     LOCATION = user_text
 
-    if re.search(r"pronostico actual|clima actual|pronostico extendido|clima extendido|detalle extendido", user_message, re.IGNORECASE):
+    response_chatbot = classification_model_cw.process_query(user_message)
+    if response_chatbot in ('clima actual', 'clima extendido', 'detalle extendido'):
+        type_query = response_chatbot
+    else:
+        telegram_bot.send_message_bot(user_id, response_chatbot)
+        return
+
+    if response_chatbot in ('clima actual', 'clima extendido', 'detalle extendido'):
         if not LOCATION:
-            chatbot_message = f"{user_first_name}, WeatherWiz 💬 requiere que primero envies una úbicación. \
+            chatbot_message = f"{user_first_name}, {CHATBOT_NAME} 💬 requiere que primero envies una úbicación. \
                                 \nPara esto utiliza el comando /location."
             telegram_bot.send_message_bot(user_id, chatbot_message)
             return
     
         elif LOCATION:
-            def validate_location(text: str):
-                regex = r"^\s*[^\d,]+,\s*[^\d,]+,\s*[^\d,]+\s*$"
+            def validate_location(text: str) -> bool:
+                """
+                Valida el formato de la úbicación.
+
+                :param text: Texto de úbiación.
+                :param type: str
+                :return: True or False.
+                :rtype: bool
+                """
+                regex = r'^\s*[\w\s]+,\s*[\w\s]+,\s*[\w\s]+\s*$'
                 return bool(re.match(regex, text, re.IGNORECASE))
             
             if not validate_location(LOCATION):
@@ -153,35 +180,40 @@ def chatbot_handler(message: Message) -> None:
     weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
 
     if not weather_forecast:
-        chatbot_message = f"Disculpa {user_first_name}, WeatherWiz 💬 no puede procesar esa información."
+        chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no puede procesar esa información."
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
         return
 
-    if re.search(r"pronostico actual|clima actual", user_message, re.IGNORECASE):
+    if type_query == 'clima actual':
         type_query = "current_weather"
         current_weather = weather_forecast.get_current_weather()
 
         if not current_weather:
-            chatbot_message = f"Disculpa {user_first_name}, WeatherWiz 💬 no puede procesar esa información."
+            chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no puede procesar esa información."
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             return
 
         weather_details = weather_forecast.get_weather_details(
             current_weather)
-        chatbot_message, chatbot_message_sticker = build_message(
+        chatbot_message, chatbot_message_sticker, weather_status = build_message(
             weather_details, type_query)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
         telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
-    if re.search(r"pronostico extendido|clima extendido", user_message, re.IGNORECASE):
+        classification_model_w = ClassificationModel(DATASET)
+        classification_model_w.set_prepare_model(["weather_status"])
+        recomendation_chatbot = classification_model_w.process_query(weather_status)
+        telegram_bot.send_message_bot(user_id, recomendation_chatbot)
+
+    if type_query == 'clima extendido':
         type_query = "extended_weather"
         forecast = weather_forecast.get_forecast()
 
         if not forecast:
-            chatbot_message = f"Disculpa {user_first_name}, WeatherWiz 💬 no puede procesar esa información."
+            chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no puede procesar esa información."
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             return
@@ -190,28 +222,28 @@ def chatbot_handler(message: Message) -> None:
         for date in dates:
             weather = weather_forecast.get_weather_at_date(forecast, date)
             weather_details = weather_forecast.get_weather_details(weather)
-            chatbot_message, chatbot_message_sticker = build_message(
+            chatbot_message, chatbot_message_sticker, _ = build_message(
                 weather_details, type_query)
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
 
-    if re.search(r"detalle extendido", user_message, re.IGNORECASE):
+    if type_query == 'detalle extendido':
         type_query = "detailed_extended_weather"
         extend_forecast = weather_forecast.get_extended_forecast()
         if not extend_forecast:
-            chatbot_message = f"Disculpa {user_first_name}, WeatherWiz 💬 no puede procesar esa información."
+            chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no puede procesar esa información."
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             return
 
-        chatbot_message, _ = build_message(
+        chatbot_message, _, _ = build_message(
             extend_forecast, type_query)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
 
     if not chatbot_message:
-        chatbot_message = f"Disculpa {user_first_name}, WeatherWiz 💬 no comprende tu consulta. \
+        chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no comprende tu consulta. \
                             \n¿Podrías explicarte mejor? 😀"
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
@@ -225,35 +257,36 @@ if __name__ == "__main__":
     Antes de ejecutar este script, asegúrate de haber configurado las variables de entorno
     TB_API_KEY y OWN_API_KEY en tu archivo .env con las claves de la API de Telegram y OpenWeatherMap, respectivamente.
 
-    Para iniciar el Chatbot, se crea una instancia de WeatherForecast con la clave de API de OpenWeatherMap
-    y la ubicación deseada. Luego, se crea una instancia de TelegramBot con la clave de API de Telegram,
-    el nombre del bot, su uso y funcionalidad, así como el controlador de mensajes. Finalmente, se inicia
-    el bot de Telegram.
-
     El bot responde a diferentes comandos de usuario para proporcionar información meteorológica, incluyendo
     el clima actual, el pronóstico extendido y detalles adicionales del clima.
 
     Ejemplo de uso:
         python main.py
     """
-    print(f"\n\tInicia servicio WeatherWiz. ")
+    CHATBOT_NAME = "WeatherWiz"
+
+    print(f"\n\tInicia servicio {CHATBOT_NAME}. ")
 
     LOCATION = None
 
-    CHATBOT = "WeatherWiz"
-    COMMAND_START = f"{CHATBOT} 💬"
+    COMMAND_START = f"{CHATBOT_NAME} 💬"
     COMMAND_HELP = f"\n• Clima actual. \
                         \n• Pronostico extendido. \
                         \n• Detalle extendido."
-    COMMAND_DSCRIPTION = f"{CHATBOT} 💬 brinda información meteorológica."
+    COMMAND_DSCRIPTION = f"{CHATBOT_NAME} 💬 brinda información meteorológica."
 
     add_message_command_location = f"\n\nÚsted se registro con la sig. ubicación: {LOCATION}." if LOCATION else ""
-    COMMAND_LOCATION = f"{CHATBOT} 💬 utilizara su ubicación personal de registro por defecto. \
+    COMMAND_LOCATION = f"{CHATBOT_NAME} 💬 utilizara su ubicación personal de registro por defecto. \
                             {add_message_command_location} \
                             \n\nSi desea conocer el clima en otra ubicación ingrese: \
                             \n• Ciudad, Provincia/Estado, País. \
                             \n\n📍 Ejemplo de ubicación: \
                             \nSan Miguel, Buenos Aires, Argentina."
+
+    DATASET = 'processing/dataset.yml'
+
+    classification_model_cw = ClassificationModel(DATASET)
+    classification_model_cw.set_prepare_model(["conversation", "weather"])
 
     telegram_bot = TelegramBot(TB_API_KEY, COMMAND_START, COMMAND_HELP,
                                COMMAND_DSCRIPTION, COMMAND_LOCATION,
@@ -273,4 +306,4 @@ if __name__ == "__main__":
 
     print(F"\n\t\tEjecución de Thread ID: {id_thread} finalizada.")
 
-    print(f"\n\tFinaliza servicio WeatherWiz.\n")
+    print(f"\n\tFinaliza servicio {CHATBOT_NAME}.\n")
