@@ -14,8 +14,8 @@ except (ImportError, ModuleNotFoundError):
     path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     sys.path.insert(1, path)
 
-from utils.decorators import retry_on_error
 from utils.datetime_manager import DatetimeManager
+from utils.decorator_manager import DecoratorManager
 
 
 class WeatherForecast:
@@ -38,7 +38,7 @@ class WeatherForecast:
 
     API de OpenWeatherMap en su sitio web oficial: https://openweathermap.org/
 
-    - API's:
+    - API"s:
         - https://openweathermap.org/current
         - https://openweathermap.org/forecast5
 
@@ -47,7 +47,7 @@ class WeatherForecast:
         location (str): Ubicación para la cual se desea obtener el pronóstico del clima.
     """
 
-    @retry_on_error(exceptions=(ConfigurationError, APIRequestError, APIResponseError))
+    @DecoratorManager.retry_on_error(exceptions=(ConfigurationError))
     def __init__(self, api_key: str, location: str) -> None:
         """
         Inicializa la clase WeatherForecast.
@@ -60,15 +60,15 @@ class WeatherForecast:
         self._api_key = api_key
         self.location = location
         self.config_dict = get_default_config()
-        self.config_dict['language'] = 'es'
-        self.config_dict['timeout_secs'] = 5
-        self.config_dict['max_retries'] = 3
+        self.config_dict["language"] = "es"
+        self.config_dict["timeout_secs"] = 5
+        self.config_dict["max_retries"] = 3
         self.owm = OWM(self._api_key)
         self.weather_manager = self.owm.weather_manager()
         self.datetime_manager = DatetimeManager()
 
-    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
-    def get_forecast(self, interval: str = '3h') -> Forecast:
+    @DecoratorManager.retry_on_error(exceptions=(APIRequestError, APIResponseError))
+    def get_forecast(self, interval: str = "3h") -> Forecast or None:
         """
         Obtiene el pronóstico del tiempo para la ubicación especificada, para
         un rango de 5 días, con intervalos de pronóstico cada 3 horas.
@@ -76,14 +76,14 @@ class WeatherForecast:
         :param interval: Intervalo de tiempo para el pronóstico (predeterminado: 3 horas).
         :type interval: str
         :return: Pronóstico del tiempo.
-        :rtype: pyowm.weatherapi25.forecast.Forecast
+        :rtype: pyowm.weatherapi25.forecast.Forecast o None
         """
         forecast = self.weather_manager.forecast_at_place(
             self.location, interval=interval)
         return forecast
 
-    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
-    def get_weather_at_date(self, forecast: Forecast, date: str) -> Weather:
+    @DecoratorManager.retry_on_error(exceptions=(APIRequestError, APIResponseError))
+    def get_weather_at_date(self, forecast: Forecast, date: str) -> Weather or None:
         """
         Obtiene el estado del tiempo en una fecha específica del pronóstico.
 
@@ -92,13 +92,13 @@ class WeatherForecast:
         :param date: Fecha para la cual se desea obtener el estado del tiempo.
         :type date: str
         :return: Estado del tiempo en la fecha especificada.
-        :rtype: pyowm.weatherapi25.weather.Weather
+        :rtype: pyowm.weatherapi25.weather.Weather o None.
         """
         weather = forecast.get_weather_at(date)
         return weather
 
-    @retry_on_error(exceptions=(APIRequestError, APIResponseError))
-    def get_current_weather(self) -> Weather:
+    @DecoratorManager.retry_on_error(exceptions=(APIRequestError, APIResponseError))
+    def get_current_weather(self) -> Weather or None:
         """
         Obtiene el estado del tiempo actual para la ubicación especificada.
 
@@ -106,6 +106,8 @@ class WeatherForecast:
         :rtype: pyowm.weatherapi25.weather.Weather
         """
         observation = self.weather_manager.weather_at_place(self.location)
+        if not observation:
+            return None
         weather = observation.weather
         # Importante: reception_time del object observation define el momento en el que se consulta, pero reference_time del object weather define la ultima actualización del tiempo para la úbicación.
         return weather
@@ -120,7 +122,7 @@ class WeatherForecast:
         :rtype: dict
         """
         details = dict()
-        details['weather_of_the_day'], details['latest_weather_update'] = self.datetime_manager.build_day_and_time(
+        details["weather_of_the_day"], details["latest_weather_update"] = self.datetime_manager.build_day_and_time(
             weather.reference_time())
         details["weather_status"] = weather.detailed_status.capitalize()
         details["sunset_time"] = self._get_sunset_time(weather)
@@ -139,14 +141,16 @@ class WeatherForecast:
         details["weather_status_icon"] = self._get_weather_icon_emoji(weather)
         return details
 
-    def get_extended_forecast(self) -> dict:
+    def get_extended_forecast(self) -> dict or None:
         """
         Obtiene el pronóstico extendido para la ubicación especificada.
 
         :return: Pronóstico extendido.
-        :rtype: dict
+        :rtype: dict o None
         """
         forecast = self.get_forecast()
+        if not forecast:
+            return None
         details = dict()
         details["most_cold"] = self._get_most_cold(forecast)
         details["most_hot"] = self._get_most_hot(forecast)
@@ -206,7 +210,7 @@ class WeatherForecast:
         temp_min y temp_max son parámetros opcionales que significan la temperatura mínima / máxima en 
         la ciudad en el momento actual solo para su referencia. Para grandes ciudades y megalópolis 
         geográficamente expandidas podría ser aplicable. En la mayoría de los casos, los parámetros 
-        temp_min y temp_max tienen el mismo volumen que 'temp'. Utilice opcionalmente los parámetros 
+        temp_min y temp_max tienen el mismo volumen que "temp". Utilice opcionalmente los parámetros 
         temp_min y temp_max en la API meteorológica actual.
 
         Example of Current Weather API response:
@@ -221,16 +225,16 @@ class WeatherForecast:
         Fuente: https://openweathermap.org/forecast5
         """
 
-        temperature = weather.temperature(unit='celsius')
+        temperature = weather.temperature(unit="celsius")
         details = dict()
         if temperature:
-            details["feels_like"] = f'{temperature.get("feels_like")}°' if temperature.get(
+            details["feels_like"] = f"{temperature.get('feels_like')}°" if temperature.get(
                 "feels_like") else None
-            details["temp"] = f'{temperature.get("temp")}°' if temperature.get(
+            details["temp"] = f"{temperature.get('temp')}°" if temperature.get(
                 "temp") else None
-            details["max_temp"] = f'{temperature.get("temp_max")}°' if temperature.get(
+            details["max_temp"] = f"{temperature.get('temp_max')}°" if temperature.get(
                 "temp_max") else None
-            details["min_temp"] = f'{temperature.get("temp_min")}°' if temperature.get(
+            details["min_temp"] = f"{temperature.get('temp_min')}°" if temperature.get(
                 "temp_min") else None
         return details
 
@@ -251,12 +255,12 @@ class WeatherForecast:
                 return pressure
             else:
                 if pressure < 500:
-                    level_pressure = 'Baja'
+                    level_pressure = "Baja"
                 elif pressure >= 500 and pressure <= 1500:
-                    level_pressure = 'Media'
+                    level_pressure = "Media"
                 elif level_pressure > 1500:
-                    level_pressure = 'Alta'
-            pressure = f'{pressure}hPa - {level_pressure}'
+                    level_pressure = "Alta"
+            pressure = f"{pressure}hPa - {level_pressure}"
         return pressure
 
     def _get_visibility(self, weather: Weather) -> str or None:
@@ -269,9 +273,9 @@ class WeatherForecast:
         :rtype: str or None
         """
         visibility = None
-        weather_visibily = weather.visibility(unit='kilometers')
+        weather_visibily = weather.visibility(unit="kilometers")
         if weather_visibily:
-            visibility = f'{weather_visibily}km'
+            visibility = f"{weather_visibily}km"
         return visibility
 
     def _get_wind_speed(self, weather: Weather) -> str or None:
@@ -283,9 +287,9 @@ class WeatherForecast:
         :return: Velocidad del viento (por defecto en kilómetros por hora km/h).
         :rtype: str or None
         """
-        weather_wind = weather.wind(unit='km_hour')
+        weather_wind = weather.wind(unit="km_hour")
         if weather_wind:
-            return f'{round(weather_wind.get("speed"), 2)}km/h' if weather_wind.get("speed") else None
+            return f"{round(weather_wind.get('speed'), 2)}km/h" if weather_wind.get('speed') else None
 
     def _get_clouds(self, weather: Weather) -> str or None:
         """
@@ -296,7 +300,7 @@ class WeatherForecast:
         :return: Cobertura de nubes en porcentaje.
         :rtype: str or None
         """
-        return None if not weather.clouds else f'{weather.clouds}%'
+        return None if not weather.clouds else f"{weather.clouds}%"
 
     def _get_rain(self, weather: Weather) -> str or None:
         """
@@ -309,13 +313,13 @@ class WeatherForecast:
         """
         rain = None
         if weather.rain:
-            if weather.rain.get('1h'):
-                hour = '1h'
-            elif weather.rain.get('3h'):
-                hour = '3h'
-            mm = f'{weather.rain.get(hour)}mm'
+            if weather.rain.get("1h"):
+                hour = "1h"
+            elif weather.rain.get("3h"):
+                hour = "3h"
+            mm = f"{weather.rain.get(hour)}mm"
 
-            rain = f'{mm}/{hour}'
+            rain = f"{mm}/{hour}"
         return rain
 
     def _get_snow(self, weather: Weather) -> str or None:
@@ -329,13 +333,13 @@ class WeatherForecast:
         """
         snow = None
         if weather.snow:
-            if weather.snow.get('1h'):
-                hour = '1'
-            elif weather.snow.get('3h'):
-                hour = '3'
-            mm = f'{weather.snow.get(hour)}mm'
+            if weather.snow.get("1h"):
+                hour = "1"
+            elif weather.snow.get("3h"):
+                hour = "3"
+            mm = f"{weather.snow.get(hour)}mm"
 
-            snow = f'{mm}/{hour}'
+            snow = f"{mm}/{hour}"
         return snow
 
     def _get_humidity(self, weather: Weather) -> str or None:
@@ -347,7 +351,7 @@ class WeatherForecast:
         :return: Humedad relativa en porcentaje.
         :rtype: str or None
         """
-        return None if not weather.humidity else f'{weather.humidity}%'
+        return None if not weather.humidity else f"{weather.humidity}%"
     
     def _get_weather_icon_emoji(self, weather: Weather) -> str:
         """
@@ -402,7 +406,7 @@ class WeatherForecast:
         :return: Probabilidad de precipitación en porcentaje.
         :rtype: str or None
         """
-        return None if not weather.precipitation_probability else f'{int(weather.precipitation_probability * 100)}%'
+        return None if not weather.precipitation_probability else f"{int(weather.precipitation_probability * 100)}%"
 
     def _get_most_cold(self, forecast: Forecast) -> tuple:
         """
