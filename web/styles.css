@@ -28,7 +28,7 @@ body {
     cursor: default;
 }
 .success {
-    background-color: lime;
+    background-color: green;
 }
 .error {
     background-color: crimson;
@@ -66,4 +66,15 @@ img {
     color: white;
     border-width: 0;
     cursor: pointer;
+}
+
+.spinner {
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }

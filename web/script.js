@@ -1,4 +1,5 @@
 const authenticateBtn = document.getElementById('authenticateBtn');
+const btnText = authenticateBtn.innerText;
 const currentUrl = window.location.href;
 const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
@@ -22,29 +23,26 @@ validateLink().then(response => {
 
 function addListeners(response) {
     authenticateBtn.addEventListener('click', async () => {
-        authenticateBtn.classList.add("loading");
-        try {
-            const createNew = response.createNewCredential;
-            const credentialOptions = formatCredOpt(response.credentialOptions, createNew);
-            const auth = createNew ? navigator.credentials.create(credentialOptions) : navigator.credentials.get(credentialOptions);
-            auth.then(authenticateKey)
-            .then(authResponse => {
-                if (authResponse.authSuccess) {
-                    showToast("Autenticacion exitosa, redireccionando a telegram", false, 1.5);
-                    setTimeout(() => {
-                        window.location.href = 'tg://resolve?domain=https://t.me/t_weather_wiz_bot';
-                        showToast("Si no funciona, haz click <a href='https://t.me/t_weather_wiz_bot'>aqui</a>", false, 60);
-                    }, 1500);
-                } else {
-                    showToast("Autenticacion fallida, dispositivo no registrado.");
-                }
-            })
-        } catch (error) {
-            console.error(error);
+        startSpinner();
+        const createNew = response.createNewCredential;
+        const credentialOptions = formatCredOpt(response.credentialOptions, createNew);
+        const auth = createNew ? navigator.credentials.create(credentialOptions) : navigator.credentials.get(credentialOptions);
+        auth.then(authenticateKey)
+        .then(authResponse => {
+            if (authResponse.authSuccess) {
+                showToast("Autenticacion exitosa, redireccionando a telegram. Si no funciona, haz click <a href='https://t.me/t_weather_wiz_bot'>aqui</a>", false, 60);
+                setTimeout(() => {
+                    window.location.href = 'tg://resolve?domain=https://t.me/t_weather_wiz_bot';
+                }, 1500);
+            } else {
+                showToast("Autenticacion fallida, dispositivo no registrado.");
+            }
+        }).then(stopSpinner)
+        .catch(() => {
             showToast("Error en la autenticacion, vuelve a intentar.");
-        }
+            stopSpinner();
+        });
     });
-    authenticateBtn.classList.remove("loading");
 }
 
 function formatCredOpt(credOpt, createNew) {
@@ -98,4 +96,15 @@ function hideToast() {
     const toast = document.getElementById('toast');
     toast.classList.add('hidden');
     toast.classList.remove("error", "success");
+}
+
+function startSpinner() {
+    authenticateBtn.classList.add("spinner");
+    authenticateBtn.blur();
+    authenticateBtn.innerText = "";
+}
+
+function stopSpinner() {
+    authenticateBtn.classList.remove("spinner");
+    authenticateBtn.innerText = btnText;
 }
