@@ -13,7 +13,7 @@ body {
     margin-top: 100px;
 }
 
-button {
+#authenticateBtn {
     padding: 10px 15px;
     cursor: pointer;
     border-radius: 15px;
@@ -21,13 +21,16 @@ button {
     margin: auto;
 }
 
-button:hover {
+#authenticateBtn:not([disabled]):focus {
     background-color: #2bbceb;
 }
-button.success {
+#authenticateBtn[disabled]{
+    cursor: default;
+}
+.success {
     background-color: lime;
 }
-button.error {
+.error {
     background-color: crimson;
     color: white;
 }
@@ -40,4 +43,27 @@ img {
     max-width: 100%;
     max-height: 40vh;
     margin: auto;
+}
+
+#toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-radius: 15px;
+}
+
+#toast.hidden {
+    display: none;
+}
+
+#toast > button {
+    background-color: transparent;
+    color: white;
+    border-width: 0;
+    cursor: pointer;
 }
