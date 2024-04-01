@@ -1,78 +1,101 @@
 const authenticateBtn = document.getElementById('authenticateBtn');
-const statusMessage = document.getElementById('statusMessage');
-const originalID = document.getElementById('originalID');
-const newID = document.getElementById('newID');
+const currentUrl = window.location.href;
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+const id = params.get('id');
+const apiUrl = "http://localhost:5000/api/";
 
-const randomUserId = new Uint8Array(16);
-// crypto.getRandomValues(randomUserId); // Generate a random user ID, disabled to avoid creating multiple during testing
-let storedCredential = null; // Variable to store the credential
-const originalContent = authenticateBtn.textContent
-authenticateBtn.addEventListener('click', async () => {
-    if (!window.PublicKeyCredential) {
-        console.log("Error: Cliente no compatible, por favor prueba con otro browser o dispositivo")
+if (!window.PublicKeyCredential) {
+    showToast("Error: Cliente no compatible, por favor prueba con otro browser o dispositivo");
+}
+
+validateLink().then(response => {
+    if (!response || !response.isValid) {
+        showToast("Error: link invalido, solicita uno nuevo y asegurate de usar el ultimo recibido");
+        return;
     }
-    authenticateBtn.textContent = "Loading..."
-    const challenge = crypto.getRandomValues(new Uint8Array(32));
-    console.log("starting biometrics")
-    try {
-        if (!storedCredential) {
-            // If no stored credential, create a new one
-            storedCredential = await navigator.credentials.create({
-                publicKey: {
-                    challenge: challenge, // Generate a random challenge
-                    rp: { name: 'WeatherWiz' },
-                    user: { id: randomUserId, name: 'user@example.com', displayName: 'User' },
-                    pubKeyCredParams: [
-                        { type: 'public-key', alg: -7 },  // ES256
-                        { type: 'public-key', alg: -257 }  // RS256
-                    ],
-                    authenticatorSelection: { authenticatorAttachment: 'platform' },
-                    timeout: 60000, // Timeout in milliseconds
-                    attestation: 'direct'
-                }
-            });
-            originalID.textContent = storedCredential.id;
-        } else {
-            // If there's a stored credential, use it for authentication
-            storedCredential = await navigator.credentials.get({
-                publicKey: {
-                    challenge: challenge, // Generate a new challenge
-                    timeout: 60000, // Timeout in milliseconds
-                }
-            });
-            newID.textContent = storedCredential.id;
-        }
-
-        // Authentication successful
-        /**
-         * Aca se tendria que enviarse la public key
-         * para que el back secargue de devolver un
-         * true o false segun corresponda
-         */
-
-        // Validation successful
-        console.log("Auth successful")
-        statusMessage.textContent = 'Authentication successful!';
-        console.log(storedCredential.id);
-        authenticateBtn.textContent = "Autenticacion Exitosa"
-        authenticateBtn.classList.remove("error")
-        authenticateBtn.classList.add("success")
-        setTimeout( () => {
-            console.log("Valid successful")
-            authenticateBtn.textContent = originalContent
-            authenticateBtn.classList.remove("success")
-            window.location.href = "https://t.me/t_weather_wiz_bot"
-        }, 1500)
-    } catch (error) {
-        // Handle authentication errors
-        console.log("Auth failed")
-        authenticateBtn.textContent = "Error en la autenticacion"
-        authenticateBtn.classList.add("error")
-        statusMessage.textContent = 'Authentication failed: ' + error.message;
-        console.error(error);
-        setTimeout( () => {
-            authenticateBtn.textContent = originalContent
-            authenticateBtn.classList.remove("error")
-        }, 2500)
-    }
+    addListeners(response);
+    authenticateBtn.disabled = false;
+}).catch(error => {
+    showToast("Error en la conexion con el servidor, por favor intenta de nuevo mas tarde. " + error.message);
 });
+
+function addListeners(response) {
+    authenticateBtn.addEventListener('click', async () => {
+        authenticateBtn.classList.add("loading");
+        try {
+            const createNew = response.createNewCredential;
+            const credentialOptions = formatCredOpt(response.credentialOptions, createNew);
+            const auth = createNew ? navigator.credentials.create(credentialOptions) : navigator.credentials.get(credentialOptions);
+            auth.then(authenticateKey)
+            .then(authResponse => {
+                if (authResponse.authSuccess) {
+                    showToast("Autenticacion exitosa, redireccionando a telegram", false, 1.5);
+                    setTimeout(() => {
+                        window.location.href = 'tg://resolve?domain=https://t.me/t_weather_wiz_bot';
+                        showToast("Si no funciona, haz click <a href='https://t.me/t_weather_wiz_bot'>aqui</a>", false, 60);
+                    }, 1500);
+                } else {
+                    showToast("Autenticacion fallida, dispositivo no registrado.");
+                }
+            })
+        } catch (error) {
+            console.error(error);
+            showToast("Error en la autenticacion, vuelve a intentar.");
+        }
+    });
+    authenticateBtn.classList.remove("loading");
+}
+
+function formatCredOpt(credOpt, createNew) {
+    const challenge = credOpt.publicKey.challenge;
+    credOpt.publicKey.challenge = new Uint8Array(challenge).buffer;
+    if (createNew) {
+        const id = credOpt.publicKey.user.id;
+        credOpt.publicKey.user.id = new Uint8Array(id).buffer;
+    }
+    return credOpt;
+}
+
+async function authenticateKey(key) {
+    return await sendData("authenticateKey", { key, token, id });
+}
+
+function validateLink() {
+    if (!token || !id) {
+        showToast("Link invalido, abre el recibido por telegram.");
+        return Promise.resolve(null);
+    }
+    return sendData("validateLink", { token, id });
+}
+
+async function sendData(action, data) {
+    return fetch(apiUrl+action+"/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) return response.json();
+        throw new Error("Network response was not ok.");
+    })
+    .catch(error => {
+        showToast("Hubo un error en la conexion con el servidor, prueba de nuevo mas tarde.")
+        console.error("There was a problem with the fetch operation:", error);
+    });
+}
+
+function showToast(message, error = true, duration = 3) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    toastMessage.innerHTML = message;
+    toast.classList.add(error ? "error" : "success");
+    toast.classList.remove('hidden');
+    setTimeout(hideToast, duration * 1000);
+}
+
+function hideToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('hidden');
+    toast.classList.remove("error", "success");
+}
