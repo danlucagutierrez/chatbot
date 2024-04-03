@@ -11,14 +11,15 @@ if (!window.PublicKeyCredential) {
 }
 
 validateLink().then(response => {
-    if (!response || !response.isValid) {
+    if (!response.isValid) {
         showToast("Error: link invalido, solicita uno nuevo y asegurate de usar el ultimo recibido");
         return;
     }
     addListeners(response);
     authenticateBtn.disabled = false;
 }).catch(error => {
-    showToast("Error en la conexion con el servidor, por favor intenta de nuevo mas tarde. " + error.message);
+    showToast("Error en la conexion con el servidor, por favor intenta de nuevo mas tarde.");
+    console.error(error)
 });
 
 function addListeners(response) {
@@ -27,7 +28,8 @@ function addListeners(response) {
         const createNew = response.createNewCredential;
         const credentialOptions = formatCredOpt(response.credentialOptions, createNew);
         const auth = createNew ? navigator.credentials.create(credentialOptions) : navigator.credentials.get(credentialOptions);
-        auth.then(authenticateKey)
+        auth.then(auth => {
+            return authenticateKey(auth.id)})
         .then(authResponse => {
             if (authResponse.authSuccess) {
                 showToast("Autenticacion exitosa, redireccionando a telegram. Si no funciona, haz click <a href='https://t.me/t_weather_wiz_bot'>aqui</a>", false, 60);
@@ -38,8 +40,9 @@ function addListeners(response) {
                 showToast("Autenticacion fallida, dispositivo no registrado.");
             }
         }).then(stopSpinner)
-        .catch(() => {
+        .catch(error => {
             showToast("Error en la autenticacion, vuelve a intentar.");
+            console.error(error)
             stopSpinner();
         });
     });
