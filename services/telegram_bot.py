@@ -154,7 +154,7 @@ class TelegramBot:
         self.bot.reply_to(message, text, timeout=5)
 
     @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
-    def send_message_bot(self, chat_id: int, text: str) -> None:
+    def send_message_bot(self, chat_id: int, text: str, parse_mode: str = None) -> None:
         """
         Envia un mensaje.
 
@@ -163,7 +163,7 @@ class TelegramBot:
         :param text: El texto de respuesta.
         :type text: str
         """
-        self.bot.send_message(chat_id, text, timeout=5)
+        self.bot.send_message(chat_id, text, parse_mode, timeout=5)
 
     def start_bot(self) -> None:
         """
