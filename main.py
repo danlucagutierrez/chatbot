@@ -3,6 +3,7 @@ import re
 import signal
 import threading
 from dotenv import load_dotenv
+from pymongo import MongoClient
 from telebot.types import Message
 
 try:
@@ -14,12 +15,13 @@ except (ImportError, ModuleNotFoundError):
 
 from services.telegram_bot import TelegramBot
 from services.weather_forecast import WeatherForecast
+from services.auth import AuthService
 from processing.classification_model import ClassificationModel
-
 
 load_dotenv()
 TB_API_KEY = os.getenv("TB_API_KEY")
 OWM_API_KEY = os.getenv("OWN_API_KEY")
+MONGO_URL = os.getenv("MONGO_URL")
 
 THREADS = False
 
@@ -35,13 +37,25 @@ def set_threads(signum, frame):
 signal.signal(signal.SIGINT, set_threads)
 
 
-def run_thread():
+def run_telegram_thread():
     """
     Crea el hilo que contreda la ejecución de TelegramBot.
     """
     thread = threading.Thread(name="Chatbot", target=telegram_bot.start_bot)
     thread.start()
     return thread
+
+def run_auth_thread():
+    """
+    Crea el hilo que contreda la ejecución del autenticador.
+    """
+    thread = threading.Thread(name="Auth", target=authenticator.start)
+    thread.start()
+    return thread
+
+def start_mongo():
+    client = MongoClient(MONGO_URL)
+    return client.weatherwiz
 
 
 def build_message(weather_details: dict, type_query: str) -> tuple:
@@ -133,6 +147,15 @@ def chatbot_handler(message: Message) -> None:
     user_first_name = message.from_user.first_name
     user_message = message.text
 
+    # print(user_id, user_first_name, user_message)
+
+    if not authenticator.is_authenticated(user_id):
+        link = authenticator.gen_temp_link(user_id, user_first_name)
+        chatbot_message = f"{user_first_name}, tus datos son sensibles\. Autentificate primero haciendo click [aqui]({link})\n"
+        print(chatbot_message)
+        telegram_bot.send_message_bot(user_id, chatbot_message, "MarkdownV2")
+        return
+    
     type_query = None
 
     chatbot_message = None
@@ -292,18 +315,30 @@ if __name__ == "__main__":
                                COMMAND_DSCRIPTION, COMMAND_LOCATION,
                                chatbot_handler)
 
-    thread = run_thread()
-    id_thread = thread.native_id
+    telegram_thread = run_telegram_thread()
+    telegram_thread_id = telegram_thread.native_id
+    print(f"\n\t\tEjecución Telegram Thread ID: {telegram_thread_id}")
 
-    print(f"\n\t\tEjecución Thread ID: {id_thread}")
+    db = start_mongo()
+    print("Started mongoDB")
+
+    authenticator = AuthService(db)
+    auth_thread = run_auth_thread()
+    auth_thread_id = auth_thread.native_id
+    print(f"\n\t\tEjecución Auth Thread ID: {auth_thread_id}")
 
     while not THREADS: pass
 
-    print(f"\n\t\t\tFinalizando Thread ID: {id_thread}, aguarde unos segundos...")
+    print(f"\n\t\t\tFinalizando Telegram Thread ID: {telegram_thread_id}, aguarde unos segundos...")
 
     telegram_bot.stop_bot()
-    thread.join()
+    telegram_thread.join()
 
-    print(F"\n\t\tEjecución de Thread ID: {id_thread} finalizada.")
+    print(f"\n\t\tEjecución de Telegram Thread ID: {telegram_thread_id} finalizada.")
 
     print(f"\n\tFinaliza servicio {CHATBOT_NAME}.\n")
+
+    authenticator.stop()
+    auth_thread.join()
+
+    print(f"\n\tEjecución de Auth Thread ID: {auth_thread_id} finalizada.")
