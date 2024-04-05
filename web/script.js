@@ -4,7 +4,7 @@ const currentUrl = window.location.href;
 const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
 const id = params.get('id');
-const apiUrl = "http://localhost:5000/api/";
+const apiUrl = "https://quality-cicada-wrongly.ngrok-free.app/api/";
 
 if (!window.PublicKeyCredential) {
     showToast("Error: Cliente no compatible, por favor prueba con otro browser o dispositivo");

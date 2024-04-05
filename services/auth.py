@@ -12,7 +12,7 @@ class AuthService:
         self.setup_routes()
     
     def start(self):
-        self.app.run()
+        self.app.run(host='0.0.0.0', port=5000)
 
     def stop(self):
         raise SystemExit()
@@ -21,7 +21,7 @@ class AuthService:
         # Define a function to add CORS headers to responses
         @self.app.after_request
         def add_cors_headers(response):
-            response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5500'  # Allow requests from this origin
+            response.headers['Access-Control-Allow-Origin'] = '*'  # Allow requests from this origin
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type'  # Allow Content-Type header
             response.headers['Access-Control-Allow-Methods'] = 'POST'  # Allow POST requests
             return response
@@ -55,7 +55,8 @@ class AuthService:
                 return jsonify({'isValid': False})
             tk_use = user['tk_use']
             if tk_use == 'login':
-                self.validate_key(user, publicKey)
+                if not self.validate_key(user, publicKey):
+                    return jsonify({'isValid': False})
             elif tk_use == 'register':
                 self.register_key(user, publicKey)
             self.db_set(user_id, {'lastAuthedMsg': time.time()})
@@ -73,7 +74,7 @@ class AuthService:
     def gen_temp_link(self, user_id: int, name: str, tk_use: str = 'auto') -> str:
         if tk_use == 'auto':
             tk_use = 'login' if self.is_registered(user_id) else 'register'
-        baseUrl = "https://paginafachera.com"
+        baseUrl = "https://ruminini.github.io/Auth-Test/"
         token = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         self.db_set(user_id,{'token': token,'tk_time': time.time(), 'tk_use': tk_use, 'name': name})
         print(user_id,{'token': token,'tk_time': time.time(), 'tk_use': tk_use, 'name': name})
@@ -88,6 +89,9 @@ class AuthService:
 
     def validate_key(self, user: dict, publicKey: str) -> bool:
         publicKeys = user.get('publicKeys', [])
+        print(publicKeys)
+        print(publicKey)
+        print(publicKey in publicKeys)
         return publicKey in publicKeys
     
     def validate_token(self, user: dict, token: str) -> bool:
@@ -109,20 +113,37 @@ class AuthService:
             return {
                 'publicKey': {
                     'challenge': self.gen_challenge(),
-                    'rp': {'name': 'WeatherWiz'},
-                    'user': {'id': list((user['_id']).to_bytes(16, 'big')), 'name': user['name'], 'displayName': user['name']},
+                    'rp': {
+                        'name': 'WeatherWiz',
+                        'id': 'ruminini.github.io'
+                    },
+                    'user': {
+                        'id': list((user['_id']).to_bytes(16, 'big')),
+                        'name': user['name'],
+                        'displayName': user['name']
+                    },
                     'pubKeyCredParams': [
                         {'type': "public-key", 'alg': -7},
                         {'type': "public-key", 'alg': -257}
                     ],
-                    'authenticatorSelection': {'authenticatorAttachment': "platform"},
+                    'authenticatorSelection': {
+                        'authenticatorAttachment': "platform",
+                        'residentKey': "required",
+                        'requireResidentKey': True,
+                        'userVerification': "required"
+                    },
                     'timeout': 60000,
-                    'attestation': "direct"
+                    'attestation': "direct",
+                    'extensions': {
+                        'credProps': True
+                    }
                 }}
         return {
             'publicKey': {
                 'challenge': self.gen_challenge(),
                 'timeout': 60000,
+                'rpId': "ruminini.github.io",
+                'userVerification': "required"
             }}
     
     def db_set(self, user_id, atributes):
@@ -130,9 +151,3 @@ class AuthService:
     
     def db_get(self, user_id) -> dict | None:
         return self.users.find_one({'_id': int(user_id)})
-
-
-
-if __name__ == "__main__":
-    auth_service = AuthService(MongoClient('mongodb+srv://weatherwiz:ziwrehtaew@weatherwiz.icvzjgl.mongodb.net/weatherwiz')['weatherwiz'])
-    auth_service.start()
