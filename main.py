@@ -16,6 +16,7 @@ except (ImportError, ModuleNotFoundError):
 from services.telegram_bot import TelegramBot
 from services.weather_forecast import WeatherForecast
 from services.auth import AuthService
+from utils.db_manager import DBManager
 from processing.classification_model import ClassificationModel
 
 load_dotenv()
@@ -55,7 +56,7 @@ def run_auth_thread():
 
 def start_mongo():
     client = MongoClient(MONGO_URL)
-    return client.weatherwiz
+    return DBManager(client.weatherwiz)
 
 
 def build_message(weather_details: dict, type_query: str) -> tuple:
@@ -193,8 +194,10 @@ def chatbot_handler(message: Message) -> None:
             
             if not validate_location(LOCATION):
                 chatbot_message = f"{user_first_name} recuerde que para poder proporcionar una respuesta exacta al clima, debe ingresar correctamente la ubicación. \
+                                    \n\nNo comprendo esto: \
+                                    \n❌ {LOCATION} \
                                     \n\nEl formato correcto es: \
-                                    \n• Ciudad, Provincia/Estado, País. \
+                                    \n✔ Ciudad, Provincia/Estado, País \
                                     \n\n❗ No olvide separar con comas. \
                                     \n\n/location."
                 telegram_bot.send_message_bot(user_id, chatbot_message)
@@ -320,7 +323,8 @@ if __name__ == "__main__":
     print(f"\n\t\tEjecución Telegram Thread ID: {telegram_thread_id}")
 
     db = start_mongo()
-    print("Started mongoDB")
+    print("\n\t\tStarted mongoDB")
+
 
     authenticator = AuthService(db)
     auth_thread = run_auth_thread()

@@ -4,15 +4,16 @@ import time
 import random
 import string
 from pymongo import MongoClient
+from utils.db_manager import DBManager
 
 class AuthService:
-    def __init__(self, db: MongoClient) -> None:
+    def __init__(self, db: DBManager) -> None:
+        self.db = db
         self.app = Flask(__name__)
-        self.users = db.users
         self.setup_routes()
     
     def start(self):
-        self.app.run(host='0.0.0.0', port=5000)
+        self.app.run(port=5000)
 
     def stop(self):
         raise SystemExit()
@@ -31,7 +32,7 @@ class AuthService:
             data = request.json
             user_id = data['id']
             token = data['token']
-            user = self.db_get(user_id)
+            user = self.db.get_user(user_id)
             if user == None or not self.validate_token(user, token):
                 print('Invalid token or user while validating url')
                 return jsonify({'isValid': False})
@@ -49,7 +50,7 @@ class AuthService:
             user_id = data['id']
             token = data['token']
             publicKey = data['key']
-            user = self.db_get(user_id)
+            user = self.db.get_user(user_id)
             if user == None or not self.validate_token(user, token):
                 print('Invalid token or user while authing')
                 return jsonify({'isValid': False})
@@ -59,16 +60,16 @@ class AuthService:
                     return jsonify({'isValid': False})
             elif tk_use == 'register':
                 self.register_key(user, publicKey)
-            self.db_set(user_id, {'lastAuthedMsg': time.time()})
+            self.db.set_user(user_id, {'lastAuthedMsg': time.time()})
             print('authed')
             return jsonify({'authSuccess': True})
 
     def is_authenticated(self, user_id: int) -> bool:
         # Su ultimo mensaje autenticado fue hace menos de 5 min
-        user = self.db_get(user_id)
+        user = self.db.get_user(user_id)
         if user == None or user.get('lastAuthedMsg') == None: return False
         is_authed = 300 >= time.time() - user['lastAuthedMsg']
-        if is_authed : self.db_set(user_id, {'lastAuthedMsg': time.time()})
+        if is_authed : self.db.set_user(user_id, {'lastAuthedMsg': time.time()})
         return is_authed
     
     def gen_temp_link(self, user_id: int, name: str, tk_use: str = 'auto') -> str:
@@ -76,7 +77,7 @@ class AuthService:
             tk_use = 'login' if self.is_registered(user_id) else 'register'
         baseUrl = "https://ruminini.github.io/Auth-Test/"
         token = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        self.db_set(user_id,{'token': token,'tk_time': time.time(), 'tk_use': tk_use, 'name': name})
+        self.db.set_user(user_id,{'token': token,'tk_time': time.time(), 'tk_use': tk_use, 'name': name})
         print(user_id,{'token': token,'tk_time': time.time(), 'tk_use': tk_use, 'name': name})
         return f"{baseUrl}/?token={token}&id={user_id}"
     
@@ -84,7 +85,7 @@ class AuthService:
         return list(bytearray(os.urandom(32)))
 
     def is_registered(self, user_id: int) -> bool:
-        user = self.db_get(user_id)
+        user = self.db.get_user(user_id)
         return user != None and len(user.get('publicKeys', [])) > 0
 
     def validate_key(self, user: dict, publicKey: str) -> bool:
@@ -102,7 +103,7 @@ class AuthService:
     def register_key(self, user: dict, publicKey: str) -> None:
         publicKeys = user.get('publicKeys', [])
         publicKeys.append(publicKey)
-        self.db_set(user['_id'], {'publicKeys': publicKeys})
+        self.db.set_user(user['_id'], {'publicKeys': publicKeys})
 
     def reset_account(self, telegramId: int) -> None:
         # TODO Delete the user data from the database
@@ -145,9 +146,3 @@ class AuthService:
                 'rpId': "ruminini.github.io",
                 'userVerification': "required"
             }}
-    
-    def db_set(self, user_id, atributes):
-        self.users.update_one({'_id': int(user_id)}, {'$set': atributes}, upsert=True)
-    
-    def db_get(self, user_id) -> dict | None:
-        return self.users.find_one({'_id': int(user_id)})
