@@ -59,7 +59,7 @@ class TelegramBot:
         message_handler (str): Respuesta a consultas de texto (sin comando).
     """
 
-    def __init__(self, api_key: str, command_start: str, command_help: str, command_description: str, command_location: str, chatbot_handler: Callable) -> None:
+    def __init__(self, api_key: str, command_start: str, command_help: str, command_description: str, location_handler: Callable, chatbot_handler: Callable) -> None:
         """
         Inicializa el bot de Telegram con la clave de API proporcionada.
 
@@ -71,8 +71,8 @@ class TelegramBot:
         :type command_help: str
         :param command_description: La respuesta para el comando /description.
         :type command_description: str
-        :param command_location: La respuesta para el comando /location.
-        :type command_location: str
+        :param location_handler: La función para manejar el comando /location.
+        :type location_handler: callable
         :param chatbot_handler: La función para manejar mensajes de texto.
         :type chatbot_handler: callable
         """
@@ -82,7 +82,7 @@ class TelegramBot:
         self.command_start = command_start
         self.command_help = command_help
         self.command_description = command_description
-        self.command_location = command_location
+        self.location_handler = location_handler
         self.chatbot_handler = chatbot_handler
 
         self.text_response_user = None
@@ -100,24 +100,9 @@ class TelegramBot:
             lambda message: self.reply_to_bot(message, f"{self.command_start} esta aquí para ayudarte, puedes consultar por: {self.command_help}"))
         self.bot.message_handler(commands=["description"])(
             lambda message: self.reply_to_bot(message, self.command_description))
-        self.bot.message_handler(commands=["location"])(
-            lambda message: self.handle_location_command(message, self.command_location))
+        self.bot.message_handler(commands=["location"])(self.location_handler)
 
         self.bot.message_handler(content_types=["text"])(self.chatbot_handler)
-
-    @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
-    def handle_location_command(self, message: Message, command_location: str) -> None:
-        """
-        Maneja el comando /location y espera una respuesta de texto del Usuario.
-
-        :param message: El mensaje recibido.
-        :type message: Message
-        :param command_location: La respuesta para el comando /location.
-        :type command_location: str.
-        """
-        self.bot.reply_to(message, command_location)
-        self.bot.register_next_step_handler(
-            message, self.handle_text_response_user)
 
     @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
     def handle_text_response_user(self, message: Message) -> None:

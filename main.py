@@ -59,7 +59,7 @@ def start_mongo():
     return DBManager(client.weatherwiz)
 
 
-def build_message(weather_details: dict, type_query: str) -> tuple:
+def build_message(weather_details: dict, type_query: str, location: str) -> tuple:
     """
     Construye el mensaje para el Chatbot basado en los detalles del clima.
 
@@ -72,7 +72,7 @@ def build_message(weather_details: dict, type_query: str) -> tuple:
     """
     message_parts = [f"{CHATBOT_NAME} 💬\n\n"]
 
-    message_parts.append(f'📍 Ubicación: {LOCATION}.\n\n')
+    message_parts.append(f'📍 Ubicación: {location}.\n\n')
 
     if type_query == "detailed_extended_weather":
         message_parts.append("Día más...\n")
@@ -144,26 +144,17 @@ def chatbot_handler(message: Message) -> None:
     :param message: El mensaje recibido.
     :type message: telebot.types.Message
     """
-    user_id = message.chat.id
+    user_id = int(message.chat.id)
     user_first_name = message.from_user.first_name
     user_message = message.text
 
     # print(user_id, user_first_name, user_message)
 
-    if not authenticator.is_authenticated(user_id):
-        link = authenticator.gen_temp_link(user_id, user_first_name)
-        chatbot_message = f"{user_first_name}, tus datos son sensibles\. Autentificate primero haciendo click [aqui]({link})\n"
-        print(chatbot_message)
-        telegram_bot.send_message_bot(user_id, chatbot_message, "MarkdownV2")
-        return
+    if is_not_authenticated(user_id, user_first_name): return
     
     type_query = None
 
     chatbot_message = None
-
-    user_text = telegram_bot.get_text_response_user()
-    global LOCATION
-    LOCATION = user_text
 
     response_chatbot = classification_model_cw.process_query(user_message)
     if response_chatbot in ('clima actual', 'clima extendido', 'detalle extendido'):
@@ -171,39 +162,16 @@ def chatbot_handler(message: Message) -> None:
     else:
         telegram_bot.send_message_bot(user_id, response_chatbot)
         return
-
-    if response_chatbot in ('clima actual', 'clima extendido', 'detalle extendido'):
-        if not LOCATION:
-            chatbot_message = f"{user_first_name}, {CHATBOT_NAME} 💬 requiere que primero envies una úbicación. \
-                                \nPara esto utiliza el comando /location."
-            telegram_bot.send_message_bot(user_id, chatbot_message)
-            return
     
-        elif LOCATION:
-            def validate_location(text: str) -> bool:
-                """
-                Valida el formato de la úbicación.
+    location = db.get_location(user_id)
 
-                :param text: Texto de úbiación.
-                :param type: str
-                :return: True or False.
-                :rtype: bool
-                """
-                regex = r'^\s*[\w\s]+,\s*[\w\s]+,\s*[\w\s]+\s*$'
-                return bool(re.match(regex, text, re.IGNORECASE))
-            
-            if not validate_location(LOCATION):
-                chatbot_message = f"{user_first_name} recuerde que para poder proporcionar una respuesta exacta al clima, debe ingresar correctamente la ubicación. \
-                                    \n\nNo comprendo esto: \
-                                    \n❌ {LOCATION} \
-                                    \n\nEl formato correcto es: \
-                                    \n✔ Ciudad, Provincia/Estado, País \
-                                    \n\n❗ No olvide separar con comas. \
-                                    \n\n/location."
-                telegram_bot.send_message_bot(user_id, chatbot_message)
-                return
+    if not location:
+        chatbot_message = f"{user_first_name}, {CHATBOT_NAME} 💬 requiere que primero envies una úbicación. \
+                            \nPara esto utiliza el comando /location."
+        telegram_bot.send_message_bot(user_id, chatbot_message)
+        return
 
-    weather_forecast = WeatherForecast(OWM_API_KEY, LOCATION)
+    weather_forecast = WeatherForecast(OWM_API_KEY, location)
 
     if not weather_forecast:
         chatbot_message = f"Disculpa {user_first_name}, {CHATBOT_NAME} 💬 no puede procesar esa información."
@@ -224,7 +192,7 @@ def chatbot_handler(message: Message) -> None:
         weather_details = weather_forecast.get_weather_details(
             current_weather)
         chatbot_message, chatbot_message_sticker, weather_status = build_message(
-            weather_details, type_query)
+            weather_details, type_query, location)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
         telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
@@ -249,7 +217,7 @@ def chatbot_handler(message: Message) -> None:
             weather = weather_forecast.get_weather_at_date(forecast, date)
             weather_details = weather_forecast.get_weather_details(weather)
             chatbot_message, chatbot_message_sticker, _ = build_message(
-                weather_details, type_query)
+                weather_details, type_query, location)
 
             telegram_bot.send_message_bot(user_id, chatbot_message)
             telegram_bot.send_message_bot(user_id, chatbot_message_sticker)
@@ -264,7 +232,7 @@ def chatbot_handler(message: Message) -> None:
             return
 
         chatbot_message, _, _ = build_message(
-            extend_forecast, type_query)
+            extend_forecast, type_query, location)
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
 
@@ -274,6 +242,78 @@ def chatbot_handler(message: Message) -> None:
 
         telegram_bot.send_message_bot(user_id, chatbot_message)
 
+
+def validate_location(text: str) -> bool:
+    """
+    Valida el formato de la úbicación.
+
+    :param text: Texto de úbiación.
+    :param type: str
+    :return: True or False.
+    :rtype: bool
+    """
+    regex = r'^\s*[\w\s]+,\s*[\w\s]+,\s*[\w\s]+\s*$'
+    return bool(re.match(regex, text, re.IGNORECASE))
+
+def location_handler(message: Message) -> None:
+    """
+    Maneja los mensajes sobre la ubicación del usuario.
+
+    :param message: El mensaje recibido.
+    :type message: telebot.types.Message
+    """
+    user_id = int(message.chat.id)
+    user_first_name = message.from_user.first_name
+    user_message = message.text.removeprefix('/location').strip()
+
+    if user_message.lower() == "cancelar":
+        telegram_bot.send_message_bot(user_id, "Se canceló la operación. 😊")
+        return
+
+    if is_not_authenticated(user_id, user_first_name): return
+
+    locations = db.get_locations(user_id)
+    len_loc = len(locations)
+    response = ""
+
+    # Si el mensaje es un numero correspondiente a las ubicaciones
+    if len_loc and bool(re.match(rf'^[1-{len_loc}]$', user_message)):
+        loc_id = int(user_message) - 1
+        location = locations.pop(loc_id)
+        locations.insert(0, location)
+        db.set_locations(user_id, locations)
+        return telegram_bot.send_message_bot(user_id, "Ubicación cambiada a:\n" + location)
+    
+    if validate_location(user_message):
+        if len_loc == 5: locations.pop()
+        locations.insert(0, user_message)
+        db.set_locations(user_id, locations)
+        return telegram_bot.send_message_bot(user_id, "Nueva ubicación:\n" + user_message +
+                                            "\n\n Utiliza frases como 'clima actual', 'pronostico extendido' o 'detalle extendido' para obtener la información de tu nueva ubicación. 📍")
+    
+    if len(user_message)>0:
+        response += f"No se encontro la ubicación\n'{user_message}'\n\n"
+
+    response += "Para cargar una nueva ubicación ingrese: \
+                            \n• Ciudad, Provincia/Estado, País. \
+                            \n\n📍 Ejemplo de ubicación: \
+                            \nSan Miguel, Buenos Aires, Argentina"
+    if len_loc:
+        response += "\n\nTambien puedes usar una de tus ultimas ubicaciones \
+                    escribiendo el numero correspondiente:\n"
+        response += "\n".join([f"{i+1}. {location}" for i, location in enumerate(locations)])
+    response += "\n\nSi no quieres agregar/cambiar la ubicacion, escribe: cancelar"
+    telegram_bot.send_message_bot(user_id, response)
+    telegram_bot.bot.register_next_step_handler(message, location_handler)
+    
+def is_not_authenticated(user_id: int, user_first_name: str) -> bool:
+    if authenticator.is_authenticated(user_id):
+        return False
+    link = authenticator.gen_temp_link(user_id, user_first_name)
+    chatbot_message = f"{user_first_name}, tus datos son sensibles\. Autentificate primero haciendo click [aqui]({link})\n"
+    print(chatbot_message)
+    telegram_bot.send_message_bot(user_id, chatbot_message, "MarkdownV2")
+    return True
 
 if __name__ == "__main__":
     """
@@ -293,21 +333,11 @@ if __name__ == "__main__":
 
     print(f"\n\tInicia servicio {CHATBOT_NAME}. ")
 
-    LOCATION = None
-
     COMMAND_START = f"{CHATBOT_NAME} 💬"
     COMMAND_HELP = f"\n• Clima actual. \
                         \n• Pronostico extendido. \
                         \n• Detalle extendido."
     COMMAND_DSCRIPTION = f"{CHATBOT_NAME} 💬 brinda información meteorológica."
-
-    add_message_command_location = f"\n\nÚsted se registro con la sig. ubicación: {LOCATION}." if LOCATION else ""
-    COMMAND_LOCATION = f"{CHATBOT_NAME} 💬 utilizara su ubicación personal de registro por defecto. \
-                            {add_message_command_location} \
-                            \n\nSi desea conocer el clima en otra ubicación ingrese: \
-                            \n• Ciudad, Provincia/Estado, País. \
-                            \n\n📍 Ejemplo de ubicación: \
-                            \nSan Miguel, Buenos Aires, Argentina."
 
     DATASET = 'processing/dataset.yml'
 
@@ -315,7 +345,7 @@ if __name__ == "__main__":
     classification_model_cw.set_prepare_model(["conversation", "weather"])
 
     telegram_bot = TelegramBot(TB_API_KEY, COMMAND_START, COMMAND_HELP,
-                               COMMAND_DSCRIPTION, COMMAND_LOCATION,
+                               COMMAND_DSCRIPTION, location_handler,
                                chatbot_handler)
 
     telegram_thread = run_telegram_thread()
