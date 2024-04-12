@@ -1,10 +1,11 @@
+import json
 import os
 import re
 import signal
 import threading
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from telebot.types import Message
+from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 try:
     import services
@@ -299,21 +300,44 @@ def location_handler(message: Message) -> None:
                             \n\n📍 Ejemplo de ubicación: \
                             \nSan Miguel, Buenos Aires, Argentina"
     if len_loc:
-        response += "\n\nTambien puedes usar una de tus ultimas ubicaciones \
-                    escribiendo el numero correspondiente:\n"
+        response += "\n\nTambien puedes usar una de tus ultimas ubicaciones escribiendo el numero correspondiente:\n"
         response += "\n".join([f"{i+1}. {location}" for i, location in enumerate(locations)])
     response += "\n\nSi no quieres agregar/cambiar la ubicacion, escribe: cancelar"
     telegram_bot.send_message_bot(user_id, response)
     telegram_bot.bot.register_next_step_handler(message, location_handler)
     
+def registeration_handler(message: Message) -> None:
+    """
+    Maneja los mensajes sobre el registro del usuario.
+
+    :param message: El mensaje recibido.
+    :type message: telebot.types.Message
+    """
+    user_id = int(message.chat.id)
+    user_first_name = message.from_user.first_name
+    if is_not_authenticated(user_id, user_first_name):
+        telegram_bot.send_message_bot(user_id, "Primero debes autenticarte desde un dispositivo registrado.\
+                                      \nSi no tienes un dispositivo registrado ignora este mensaje.\
+                                      \nLuego de autentificarte podras registrar otro dispositivo.")
+        return
+    link = authenticator.gen_temp_link(user_id, user_first_name, 'register')
+    chatbot_message = f"{user_first_name}, presiona el boton de abajo desde el dispositivo que quieras registrar\.\n"
+    send_auth_link(user_id, chatbot_message, 'Autenticar', link)
+
 def is_not_authenticated(user_id: int, user_first_name: str) -> bool:
     if authenticator.is_authenticated(user_id):
         return False
     link = authenticator.gen_temp_link(user_id, user_first_name)
-    chatbot_message = f"{user_first_name}, tus datos son sensibles\. Autentificate primero haciendo click [aqui]({link})\n"
-    print(chatbot_message)
-    telegram_bot.send_message_bot(user_id, chatbot_message, "MarkdownV2")
+    chatbot_message = f"{user_first_name}, tus datos son sensibles\. Primero autentificate con el boton de abajo\.\n"
+    send_auth_link(user_id, chatbot_message, 'Autenticar', link)
     return True
+
+def send_auth_link(user_id: int, chatbot_message: str, button_text: str, link: str) -> None:
+    print(chatbot_message)
+    keyboard = InlineKeyboardMarkup()
+    button = InlineKeyboardButton(text=button_text, url=link)
+    keyboard.add(button)
+    telegram_bot.send_message_bot(user_id, chatbot_message, "MarkdownV2", keyboard)
 
 if __name__ == "__main__":
     """
@@ -346,7 +370,7 @@ if __name__ == "__main__":
 
     telegram_bot = TelegramBot(TB_API_KEY, COMMAND_START, COMMAND_HELP,
                                COMMAND_DSCRIPTION, location_handler,
-                               chatbot_handler)
+                               chatbot_handler, registeration_handler)
 
     telegram_thread = run_telegram_thread()
     telegram_thread_id = telegram_thread.native_id

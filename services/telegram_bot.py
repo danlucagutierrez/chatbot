@@ -4,7 +4,7 @@ from requests.exceptions import ReadTimeout
 
 # pyTelegramBotAPI library.
 import telebot
-from telebot.types import Message
+from telebot.types import Message, InlineKeyboardMarkup
 from telebot.apihelper import ApiTelegramException
 
 try:
@@ -59,7 +59,7 @@ class TelegramBot:
         message_handler (str): Respuesta a consultas de texto (sin comando).
     """
 
-    def __init__(self, api_key: str, command_start: str, command_help: str, command_description: str, location_handler: Callable, chatbot_handler: Callable) -> None:
+    def __init__(self, api_key: str, command_start: str, command_help: str, command_description: str, location_handler: Callable, chatbot_handler: Callable, registration_handler: Callable) -> None:
         """
         Inicializa el bot de Telegram con la clave de API proporcionada.
 
@@ -75,6 +75,8 @@ class TelegramBot:
         :type location_handler: callable
         :param chatbot_handler: La función para manejar mensajes de texto.
         :type chatbot_handler: callable
+        :param location_handler: La función para manejar el comando /register.
+        :type location_handler: callable
         """
         self._api_key = api_key
         self.bot = telebot.TeleBot(self._api_key)
@@ -84,6 +86,7 @@ class TelegramBot:
         self.command_description = command_description
         self.location_handler = location_handler
         self.chatbot_handler = chatbot_handler
+        self.registration_handler = registration_handler
 
         self.text_response_user = None
 
@@ -101,6 +104,7 @@ class TelegramBot:
         self.bot.message_handler(commands=["description"])(
             lambda message: self.reply_to_bot(message, self.command_description))
         self.bot.message_handler(commands=["location"])(self.location_handler)
+        self.bot.message_handler(commands=["register"])(self.registration_handler)
 
         self.bot.message_handler(content_types=["text"])(self.chatbot_handler)
 
@@ -139,7 +143,7 @@ class TelegramBot:
         self.bot.reply_to(message, text, timeout=5)
 
     @DecoratorManager.retry_on_error(exceptions=(ApiTelegramException, ReadTimeout))
-    def send_message_bot(self, chat_id: int, text: str, parse_mode: str = None) -> None:
+    def send_message_bot(self, chat_id: int, text: str, parse_mode: str = None, reply_markup: InlineKeyboardMarkup = None) -> None:
         """
         Envia un mensaje.
 
@@ -148,7 +152,7 @@ class TelegramBot:
         :param text: El texto de respuesta.
         :type text: str
         """
-        self.bot.send_message(chat_id, text, parse_mode, timeout=5)
+        self.bot.send_message(chat_id, text, parse_mode, reply_markup=reply_markup, timeout=5)
 
     def start_bot(self) -> None:
         """
