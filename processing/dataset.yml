@@ -70,6 +70,14 @@ conversation:
 weather:
   weather_user_inquiries:
     current_weather:
+      - "clima"
+      - "clima"
+      - "clima"
+      - "clima hoy"
+      - "clima ya"
+      - "esta lloviendo"
+      - "esta nublado"
+      - "esta soleado"
       - "¿Qué temperatura hace hoy?"
       - "¿Cuál es el clima de hoy?"
       - "Clima actual."
@@ -97,6 +105,7 @@ weather:
       - "Datos meteorologícos hoy."
 
     extended_weather:
+      - "clima extendido"
       - "¿Qué temperatura hace mañana?"
       - "¿Cuál es el clima para mañana?"
       - "Clima para los próximos días."
@@ -124,6 +133,14 @@ weather:
       - "Datos meteorologícos para los próximos 5 días."
 
     detailed_extended_weather:
+      - "detalle"
+      - "detalle frio"
+      - "detalle caluroso"
+      - "detalle ventoso"
+      - "detalle nevado"
+      - "detalle lluvioso"
+      - "detalle humedo"
+      - "detalle extendido"
       - "¿Cuál es el día más frio los próximos días?"
       - "¿Cuál es el día más caluroso los próximos días?"
       - "¿Cuál es el día más ventoso los próximos días?"
